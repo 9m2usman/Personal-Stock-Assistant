@@ -6,13 +6,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.backend.core.config import settings
 from src.backend.core.logging import logger
+from src.backend.core.database import Base, async_engine
+from src.backend.core.exceptions import BaseFinancialAssistantException, financial_exception_handler
+import src.backend.models  # Register all ORM entities with Base.metadata
 from src.backend.api.v1 import api_v1_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle events management."""
+    """Lifecycle events: database table initialization and shutdown."""
     logger.info("Initializing %s (v%s) in %s mode...", settings.APP_NAME, settings.APP_VERSION, settings.ENVIRONMENT)
-    # Log provider readiness without leaking values
+    try:
+        # Initialize tables dynamically for local development
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database schema initialized successfully.")
+    except Exception as e:
+        logger.warning("Database schema auto-creation skipped or deferred: %s", e)
+
     providers = {
         "Alpha Vantage": bool(settings.ALPHA_VANTAGE_API_KEY),
         "Twelve Data": bool(settings.TWELVE_DATA_API_KEY),
@@ -23,6 +33,8 @@ async def lifespan(app: FastAPI):
     }
     logger.info("Configured Providers: %s", providers)
     yield
+    logger.info("Disposing database connections...")
+    await async_engine.dispose()
     logger.info("Shutting down %s...", settings.APP_NAME)
 
 app = FastAPI(
@@ -33,6 +45,9 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan
 )
+
+# Exception Handlers
+app.add_exception_handler(BaseFinancialAssistantException, financial_exception_handler)
 
 # CORS Middleware Configuration
 app.add_middleware(

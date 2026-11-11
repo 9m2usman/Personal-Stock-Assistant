@@ -3,6 +3,12 @@
 .env.local
 .env.*.local
 
+# Database
+*.db
+*.sqlite
+*.sqlite3
+fintech_market.db
+
 # Python
 __pycache__/
 *.py[cod]
