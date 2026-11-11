@@ -1,0 +1,1772 @@
+{
+  "validation_metadata": {
+    "validation_date_utc": "2026-11-11T08:46:00Z",
+    "audit_date_utc": "2026-11-11T09:04:25.295097+00:00",
+    "environment": "Windows Standard Environment / Python 3.14",
+    "total_tests_executed": 57,
+    "test_execution_breakdown": {
+      "phase_1_baseline_verification": 47,
+      "phase_2_diagnostic_architectural_verification": 10,
+      "total": 57
+    },
+    "provider_breakdown": {
+      "Alpha Vantage": 10,
+      "Twelve Data": 9,
+      "Financial Modeling Prep": 23,
+      "NewsAPI": 5,
+      "Nasdaq Data Link": 5,
+      "SEC EDGAR": 5
+    },
+    "audit_notes": [
+      "Reconciled 57 test records across Phase 1 (47 tests) and Phase 2 (10 tests).",
+      "Itemized all 23 FMP tests (15 Phase 1 legacy tests + 8 Phase 2 stable architecture tests).",
+      "Corrected Twelve Data current plan pricing: Grow is $79/mo, Pro is $229/mo, Venture is $499/mo.",
+      "Disaggregated Twelve Data 404 responses: HSBA (LSE) and NESN (SIX) are confirmed plan restrictions; 7203 (JPX) returned 'Data not found' (unsupported/unmapped).",
+      "Corrected Alpha Vantage historical depth on free tier: strictly 100 observations (compact); full history is premium.",
+      "Refined Nasdaq Data Link diagnosis: separated WIKI freeze (2018) from platform capability and Incapsula WAF challenge."
+    ]
+  },
+  "results": [
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=SYMBOL_SEARCH",
+      "test_purpose": "Symbol Search for NVIDIA",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVIDIA",
+      "exchange_or_region": "Global Search",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "1. symbol",
+        "2. name",
+        "3. type",
+        "4. region",
+        "5. marketOpen",
+        "6. marketClose",
+        "7. timezone",
+        "8. currency",
+        "9. matchScore"
+      ],
+      "timestamp_utc": "2026-11-11T08:36:15.796210+00:00",
+      "extra_info": {
+        "matches_found": 3,
+        "sample_matches": [
+          {
+            "1. symbol": "NVDA",
+            "2. name": "NVIDIA Corp",
+            "3. type": "Equity",
+            "4. region": "United States",
+            "5. marketOpen": "09:30",
+            "6. marketClose": "16:00",
+            "7. timezone": "UTC-04",
+            "8. currency": "USD",
+            "9. matchScore": "0.8000"
+          },
+          {
+            "1. symbol": "0R1I.LON",
+            "2. name": "NVIDIA Corp.",
+            "3. type": "Equity",
+            "4. region": "United Kingdom",
+            "5. marketOpen": "08:00",
+            "6. marketClose": "16:30",
+            "7. timezone": "UTC+01",
+            "8. currency": "USD",
+            "9. matchScore": "0.6667"
+          },
+          {
+            "1. symbol": "NVDA.TRT",
+            "2. name": "Nvidia CDR (CAD Hedged)",
+            "3. type": "Equity",
+            "4. region": "Toronto",
+            "5. marketOpen": "09:30",
+            "6. marketClose": "16:00",
+            "7. timezone": "UTC-05",
+            "8. currency": "CAD",
+            "9. matchScore": "0.6154"
+          }
+        ]
+      },
+      "test_id": "T01"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=SYMBOL_SEARCH",
+      "test_purpose": "Symbol Search for HSBC Holdings",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "HSBC Holdings",
+      "symbol": "HSBC",
+      "exchange_or_region": "Global Search",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "1. symbol",
+        "2. name",
+        "3. type",
+        "4. region",
+        "5. marketOpen",
+        "6. marketClose",
+        "7. timezone",
+        "8. currency",
+        "9. matchScore"
+      ],
+      "timestamp_utc": "2026-11-11T08:36:28.514948+00:00",
+      "extra_info": {
+        "matches_found": 3,
+        "sample_matches": [
+          {
+            "1. symbol": "HSBC",
+            "2. name": "HSBC Holdings plc",
+            "3. type": "Equity",
+            "4. region": "United States",
+            "5. marketOpen": "09:30",
+            "6. marketClose": "16:00",
+            "7. timezone": "UTC-04",
+            "8. currency": "USD",
+            "9. matchScore": "1.0000"
+          },
+          {
+            "1. symbol": "HSAS.LON",
+            "2. name": "HSBC APAC EX JP SUS EQ UC ETF USD (DIST)",
+            "3. type": "ETF",
+            "4. region": "United Kingdom",
+            "5. marketOpen": "08:00",
+            "6. marketClose": "16:30",
+            "7. timezone": "UTC+01",
+            "8. currency": "GBP",
+            "9. matchScore": "0.4000"
+          },
+          {
+            "1. symbol": "HSAX.LON",
+            "2. name": "HSBC APAC EX JP SUS EQ UC ETF USD (DIST)",
+            "3. type": "ETF",
+            "4. region": "United Kingdom",
+            "5. marketOpen": "08:00",
+            "6. marketClose": "16:30",
+            "7. timezone": "UTC+01",
+            "8. currency": "USD",
+            "9. matchScore": "0.4000"
+          }
+        ]
+      },
+      "test_id": "T02"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=SYMBOL_SEARCH",
+      "test_purpose": "Symbol Search for Toyota Motor Corporation",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Toyota Motor Corporation",
+      "symbol": "Toyota",
+      "exchange_or_region": "Global Search",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "1. symbol",
+        "2. name",
+        "3. type",
+        "4. region",
+        "5. marketOpen",
+        "6. marketClose",
+        "7. timezone",
+        "8. currency",
+        "9. matchScore"
+      ],
+      "timestamp_utc": "2026-11-11T08:36:41.600131+00:00",
+      "extra_info": {
+        "matches_found": 3,
+        "sample_matches": [
+          {
+            "1. symbol": "SCT.LIS",
+            "2. name": "Toyota Caetano",
+            "3. type": "Equity",
+            "4. region": "Lisbon",
+            "5. marketOpen": "08:00",
+            "6. marketClose": "16:30",
+            "7. timezone": "UTC+00",
+            "8. currency": "EUR",
+            "9. matchScore": "0.6000"
+          },
+          {
+            "1. symbol": "TDBOY",
+            "2. name": "Toyota Boshoku Corporation",
+            "3. type": "Equity",
+            "4. region": "United States",
+            "5. marketOpen": "09:30",
+            "6. marketClose": "16:00",
+            "7. timezone": "UTC-04",
+            "8. currency": "USD",
+            "9. matchScore": "0.5455"
+          },
+          {
+            "1. symbol": "TYT.LON",
+            "2. name": "Toyota Motor Corp",
+            "3. type": "Equity",
+            "4. region": "United Kingdom",
+            "5. marketOpen": "08:00",
+            "6. marketClose": "16:30",
+            "7. timezone": "UTC+01",
+            "8. currency": "JPY",
+            "9. matchScore": "0.5455"
+          }
+        ]
+      },
+      "test_id": "T03"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=SYMBOL_SEARCH",
+      "test_purpose": "Symbol Search for Nestle SA",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Nestle SA",
+      "symbol": "Nestle",
+      "exchange_or_region": "Global Search",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "1. symbol",
+        "2. name",
+        "3. type",
+        "4. region",
+        "5. marketOpen",
+        "6. marketClose",
+        "7. timezone",
+        "8. currency",
+        "9. matchScore"
+      ],
+      "timestamp_utc": "2026-11-11T08:36:54.508271+00:00",
+      "extra_info": {
+        "matches_found": 3,
+        "sample_matches": [
+          {
+            "1. symbol": "NSRGF",
+            "2. name": "Nestle SA",
+            "3. type": "Equity",
+            "4. region": "United States",
+            "5. marketOpen": "09:30",
+            "6. marketClose": "16:00",
+            "7. timezone": "UTC-04",
+            "8. currency": "USD",
+            "9. matchScore": "0.8000"
+          },
+          {
+            "1. symbol": "NSRGY",
+            "2. name": "Nestle SA",
+            "3. type": "Equity",
+            "4. region": "United States",
+            "5. marketOpen": "09:30",
+            "6. marketClose": "16:00",
+            "7. timezone": "UTC-04",
+            "8. currency": "USD",
+            "9. matchScore": "0.8000"
+          },
+          {
+            "1. symbol": "NESTLEIND.BSE",
+            "2. name": "Nestle India Limited",
+            "3. type": "Equity",
+            "4. region": "India/Bombay",
+            "5. marketOpen": "09:15",
+            "6. marketClose": "15:30",
+            "7. timezone": "UTC+5.5",
+            "8. currency": "INR",
+            "9. matchScore": "0.6667"
+          }
+        ]
+      },
+      "test_id": "T04"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY",
+      "test_purpose": "Daily OHLCV for NVIDIA (NVDA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US",
+      "currency": "USD",
+      "latest_data_date": "2026-11-10",
+      "data_fields_returned": [
+        "1. open",
+        "2. high",
+        "3. low",
+        "4. close",
+        "5. volume"
+      ],
+      "timestamp_utc": "2026-11-11T08:37:07.485960+00:00",
+      "extra_info": {
+        "latest_date": "2026-11-10",
+        "open": "173.9700",
+        "high": "174.6900",
+        "low": "165.8900",
+        "close": "168.8900",
+        "volume": "421638876",
+        "total_trading_days": 100,
+        "free_tier_depth_note": "Daily compact outputsize returns the latest 100 observations on free tier; outputsize=full is premium-restricted."
+      },
+      "test_id": "T05"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY",
+      "test_purpose": "Daily OHLCV for HSBC Holdings (HSBA.LON)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "HSBC Holdings",
+      "symbol": "HSBA.LON",
+      "exchange_or_region": "LSE (UK)",
+      "currency": "GBp",
+      "latest_data_date": "2026-11-10",
+      "data_fields_returned": [
+        "1. open",
+        "2. high",
+        "3. low",
+        "4. close",
+        "5. volume"
+      ],
+      "timestamp_utc": "2026-11-11T08:37:20.596960+00:00",
+      "extra_info": {
+        "latest_date": "2026-11-10",
+        "open": "1354.2000",
+        "high": "1362.8000",
+        "low": "1341.4000",
+        "close": "1341.4000",
+        "volume": "36290997",
+        "total_trading_days": 100,
+        "free_tier_depth_note": "Daily compact outputsize returns the latest 100 observations on free tier; outputsize=full is premium-restricted."
+      },
+      "test_id": "T06"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY",
+      "test_purpose": "Daily OHLCV for Toyota Motor Corporation (7203.TKS)",
+      "status": "UNSUPPORTED_SYMBOL_OR_TIER",
+      "http_status": 200,
+      "sanitized_error": "Invalid API call. Please retry or visit the documentation (https://www.alphavantage.co/documentation/) for TIME_SERIES_DAILY.",
+      "company": "Toyota Motor Corporation",
+      "symbol": "7203.TKS",
+      "exchange_or_region": "Tokyo Stock Exchange",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:37:33.324027+00:00",
+      "extra_info": {},
+      "test_id": "T07"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY",
+      "test_purpose": "Daily OHLCV for Nestle SA (NESN.SWI)",
+      "status": "UNSUPPORTED_SYMBOL_OR_TIER",
+      "http_status": 200,
+      "sanitized_error": "Invalid API call. Please retry or visit the documentation (https://www.alphavantage.co/documentation/) for TIME_SERIES_DAILY.",
+      "company": "Nestle SA",
+      "symbol": "NESN.SWI",
+      "exchange_or_region": "SIX Swiss Exchange",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:37:46.295359+00:00",
+      "extra_info": {},
+      "test_id": "T08"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY",
+      "test_purpose": "Daily OHLCV for Toyota Motor (Alternative) (7203.TYO)",
+      "status": "UNSUPPORTED_SYMBOL_OR_TIER",
+      "http_status": 200,
+      "sanitized_error": "Invalid API call. Please retry or visit the documentation (https://www.alphavantage.co/documentation/) for TIME_SERIES_DAILY.",
+      "company": "Toyota Motor (Alternative)",
+      "symbol": "7203.TYO",
+      "exchange_or_region": "Tokyo Stock Exchange Candidate 2",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:37:59.365618+00:00",
+      "extra_info": {},
+      "test_id": "T09"
+    },
+    {
+      "provider": "Alpha Vantage",
+      "endpoint": "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY",
+      "test_purpose": "Daily OHLCV for Nestle SA (Alternative) (NESN.SW)",
+      "status": "TIER_RESTRICTION_OR_RATE_LIMIT",
+      "http_status": 200,
+      "sanitized_error": "We have detected your API key as [REDACTED] and our standard API rate limit is 25 requests per day. Please subscribe to any of the premium plans at https://www.alphavantage.co/premium/ to instantly remove all daily rate limits.",
+      "company": "Nestle SA (Alternative)",
+      "symbol": "NESN.SW",
+      "exchange_or_region": "SIX Swiss Exchange Candidate 2",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:38:12.844606+00:00",
+      "extra_info": {},
+      "test_id": "T10"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/symbol_search",
+      "test_purpose": "Symbol Search for NVIDIA (NVDA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "Global Search",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "symbol",
+        "instrument_name",
+        "exchange",
+        "mic_code",
+        "exchange_timezone",
+        "instrument_type",
+        "country",
+        "currency"
+      ],
+      "timestamp_utc": "2026-11-11T08:38:21.810485+00:00",
+      "extra_info": {
+        "sample_matches": [
+          {
+            "symbol": "NVDA",
+            "instrument_name": "NVIDIA Corporation",
+            "exchange": "NASDAQ",
+            "mic_code": "XNGS",
+            "exchange_timezone": "America/New_York",
+            "instrument_type": "Common Stock",
+            "country": "United States",
+            "currency": "USD"
+          },
+          {
+            "symbol": "NVDA",
+            "instrument_name": "NVIDIA Corp CEDEAR",
+            "exchange": "BCBA",
+            "mic_code": "XBUE",
+            "exchange_timezone": "America/Argentina/Buenos_Aires",
+            "instrument_type": "Depositary Receipt",
+            "country": "Argentina",
+            "currency": "ARS"
+          },
+          {
+            "symbol": "NVDA",
+            "instrument_name": "NVIDIA Corporation",
+            "exchange": "BMV",
+            "mic_code": "XMEX",
+            "exchange_timezone": "America/Swift_Current",
+            "instrument_type": "Common Stock",
+            "country": "Mexico",
+            "currency": "MXN"
+          },
+          {
+            "symbol": "NVDA",
+            "instrument_name": "Nvidia Corporation",
+            "exchange": "TSX",
+            "mic_code": "XTSE",
+            "exchange_timezone": "America/Toronto",
+            "instrument_type": "Depositary Receipt",
+            "country": "Canada",
+            "currency": "CAD"
+          }
+        ]
+      },
+      "test_id": "T11"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/symbol_search",
+      "test_purpose": "Symbol Search for HSBC (HSBA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "HSBC",
+      "symbol": "HSBA",
+      "exchange_or_region": "Global Search",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "symbol",
+        "instrument_name",
+        "exchange",
+        "mic_code",
+        "exchange_timezone",
+        "instrument_type",
+        "country",
+        "currency"
+      ],
+      "timestamp_utc": "2026-11-11T08:38:30.601375+00:00",
+      "extra_info": {
+        "sample_matches": [
+          {
+            "symbol": "HSBA",
+            "instrument_name": "HSBC Holdings plc",
+            "exchange": "LSE",
+            "mic_code": "XLON",
+            "exchange_timezone": "Europe/London",
+            "instrument_type": "Common Stock",
+            "country": "United Kingdom",
+            "currency": "GBp"
+          },
+          {
+            "symbol": "HSBAL",
+            "instrument_name": "HSBC Holdings plc",
+            "exchange": "CBOE",
+            "mic_code": "BCXE",
+            "exchange_timezone": "Europe/London",
+            "instrument_type": "Common Stock",
+            "country": "United Kingdom",
+            "currency": "GBX"
+          }
+        ]
+      },
+      "test_id": "T12"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/symbol_search",
+      "test_purpose": "Symbol Search for Toyota (7203)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Toyota",
+      "symbol": "7203",
+      "exchange_or_region": "Global Search",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "symbol",
+        "instrument_name",
+        "exchange",
+        "mic_code",
+        "exchange_timezone",
+        "instrument_type",
+        "country",
+        "currency"
+      ],
+      "timestamp_utc": "2026-11-11T08:38:39.456041+00:00",
+      "extra_info": {
+        "sample_matches": [
+          {
+            "symbol": "7203",
+            "instrument_name": "Toyota Motor Corporation",
+            "exchange": "JPX",
+            "mic_code": "XJPX",
+            "exchange_timezone": "Asia/Tokyo",
+            "instrument_type": "Common Stock",
+            "country": "Japan",
+            "currency": "JPY"
+          },
+          {
+            "symbol": "7203",
+            "instrument_name": "Elm Co.",
+            "exchange": "Tadawul",
+            "mic_code": "XSAU",
+            "exchange_timezone": "Asia/Riyadh",
+            "instrument_type": "Common Stock",
+            "country": "Saudi Arabia",
+            "currency": "SAR"
+          },
+          {
+            "symbol": "7203",
+            "instrument_name": "Wang-Zheng Berhad",
+            "exchange": "MYX",
+            "mic_code": "XKLS",
+            "exchange_timezone": "Asia/Kuala_Lumpur",
+            "instrument_type": "Common Stock",
+            "country": "Malaysia",
+            "currency": "MYR"
+          }
+        ]
+      },
+      "test_id": "T13"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/symbol_search",
+      "test_purpose": "Symbol Search for Nestle (NESN)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Nestle",
+      "symbol": "NESN",
+      "exchange_or_region": "Global Search",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "symbol",
+        "instrument_name",
+        "exchange",
+        "mic_code",
+        "exchange_timezone",
+        "instrument_type",
+        "country",
+        "currency"
+      ],
+      "timestamp_utc": "2026-11-11T08:38:48.168666+00:00",
+      "extra_info": {
+        "sample_matches": [
+          {
+            "symbol": "NESN",
+            "instrument_name": "Nestl\u00e9 S.A.",
+            "exchange": "SIX",
+            "mic_code": "XSWX",
+            "exchange_timezone": "Europe/Zurich",
+            "instrument_type": "Common Stock",
+            "country": "Switzerland",
+            "currency": "CHF"
+          },
+          {
+            "symbol": "NESN",
+            "instrument_name": "Nestl\u00e9 S.A.",
+            "exchange": "VSE",
+            "mic_code": "XWBO",
+            "exchange_timezone": "Europe/Vienna",
+            "instrument_type": "Common Stock",
+            "country": "Austria",
+            "currency": "EUR"
+          },
+          {
+            "symbol": "NESNN",
+            "instrument_name": "Nestl\u00e9 S.A.",
+            "exchange": "BMV",
+            "mic_code": "XMEX",
+            "exchange_timezone": "America/Swift_Current",
+            "instrument_type": "Common Stock",
+            "country": "Mexico",
+            "currency": "MXN"
+          },
+          {
+            "symbol": "NESNX",
+            "instrument_name": "Natixis U.S. Equity Opportunities Fund Class N",
+            "exchange": "NASDAQ",
+            "mic_code": "XNAS",
+            "exchange_timezone": "America/New_York",
+            "instrument_type": "Mutual Fund",
+            "country": "United States",
+            "currency": "USD"
+          }
+        ]
+      },
+      "test_id": "T14"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/time_series",
+      "test_purpose": "Daily OHLCV for NVIDIA (NVDA on NASDAQ)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "NASDAQ (United States)",
+      "currency": "USD",
+      "latest_data_date": "2026-11-10",
+      "data_fields_returned": [
+        "datetime",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "timestamp_utc": "2026-11-11T08:38:57.052314+00:00",
+      "extra_info": {
+        "meta": {
+          "symbol": "NVDA",
+          "interval": "1day",
+          "currency": "USD",
+          "exchange_timezone": "America/New_York",
+          "exchange": "NASDAQ",
+          "mic_code": "XNGS",
+          "type": "Common Stock"
+        },
+        "latest_bar": {
+          "datetime": "2026-11-10",
+          "open": "173.97000",
+          "high": "174.69000",
+          "low": "165.89000",
+          "close": "168.89000",
+          "volume": "426599700"
+        },
+        "total_bars_returned": 5
+      },
+      "test_id": "T15"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/time_series",
+      "test_purpose": "Daily OHLCV for HSBC Holdings (HSBA on LSE)",
+      "status": "TIER_RESTRICTED (404)",
+      "http_status": 404,
+      "sanitized_error": "HTTPError 404: This symbol is available starting with the Grow ($79/mo) or Venture ($499/mo) plan",
+      "company": "HSBC Holdings",
+      "symbol": "HSBA",
+      "exchange_or_region": "LSE (United Kingdom)",
+      "currency": "GBp",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:06.100732+00:00",
+      "extra_info": {},
+      "test_id": "T16"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/time_series",
+      "test_purpose": "Daily OHLCV for Toyota Motor (7203 on TSE)",
+      "status": "DATA_NOT_FOUND (404)",
+      "http_status": 404,
+      "sanitized_error": "HTTPError 404: Data not found (Symbol or exchange mapping not available on basic endpoint)",
+      "company": "Toyota Motor",
+      "symbol": "7203",
+      "exchange_or_region": "TSE (Japan)",
+      "currency": "JPY",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:14.977067+00:00",
+      "extra_info": {},
+      "test_id": "T17"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/time_series",
+      "test_purpose": "Daily OHLCV for Nestle SA (NESN on SWX)",
+      "status": "TIER_RESTRICTED (404)",
+      "http_status": 404,
+      "sanitized_error": "HTTPError 404: This symbol is available starting with the Pro ($229/mo) or Venture ($499/mo) plan",
+      "company": "Nestle SA",
+      "symbol": "NESN",
+      "exchange_or_region": "SWX (Switzerland)",
+      "currency": "CHF",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:23.702327+00:00",
+      "extra_info": {},
+      "test_id": "T18"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/search",
+      "test_purpose": "Company Search (NVIDIA)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "NASDAQ",
+      "currency": "USD",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:26.879548+00:00",
+      "extra_info": {
+        "sample": {
+          "Error Message": "Legacy Endpoint : Due to Legacy endpoints being no longer supported - This endpoint is only available for legacy users who have valid subscriptions prior August 31, 2025. Please visit our documentation page https://site.financialmodelingprep.com/developer/docs for our current APIs. "
+        }
+      },
+      "test_id": "T19"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/profile",
+      "test_purpose": "Company Profile for NVIDIA (NVDA)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "NASDAQ",
+      "currency": "USD",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:30.064373+00:00",
+      "extra_info": {},
+      "test_id": "T20"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/profile",
+      "test_purpose": "Company Profile for HSBC Holdings (HSBC)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "HSBC Holdings",
+      "symbol": "HSBC",
+      "exchange_or_region": "NYSE",
+      "currency": "USD",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:33.293490+00:00",
+      "extra_info": {},
+      "test_id": "T21"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/profile",
+      "test_purpose": "Company Profile for HSBC Holdings UK (HSBA.L)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "HSBC Holdings UK",
+      "symbol": "HSBA.L",
+      "exchange_or_region": "LSE",
+      "currency": "GBp",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:36.996377+00:00",
+      "extra_info": {},
+      "test_id": "T22"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/profile",
+      "test_purpose": "Company Profile for Toyota Motor Corp (TM)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "Toyota Motor Corp",
+      "symbol": "TM",
+      "exchange_or_region": "NYSE",
+      "currency": "USD",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:40.331288+00:00",
+      "extra_info": {},
+      "test_id": "T23"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/profile",
+      "test_purpose": "Company Profile for Toyota Motor Tokyo (7203.T)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "Toyota Motor Tokyo",
+      "symbol": "7203.T",
+      "exchange_or_region": "TSE",
+      "currency": "JPY",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:43.928125+00:00",
+      "extra_info": {},
+      "test_id": "T24"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/profile",
+      "test_purpose": "Company Profile for Nestle SA Swiss (NESN.SW)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "Nestle SA Swiss",
+      "symbol": "NESN.SW",
+      "exchange_or_region": "SIX",
+      "currency": "CHF",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:47.024452+00:00",
+      "extra_info": {},
+      "test_id": "T25"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/income-statement",
+      "test_purpose": "Income Statement for NVIDIA (NVDA)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US / Global",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:50.254357+00:00",
+      "extra_info": {},
+      "test_id": "T26"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/balance-sheet-statement",
+      "test_purpose": "Balance Sheet for NVIDIA (NVDA)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US / Global",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:53.715885+00:00",
+      "extra_info": {},
+      "test_id": "T27"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/cash-flow-statement",
+      "test_purpose": "Cash Flow Statement for NVIDIA (NVDA)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US / Global",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:39:56.898046+00:00",
+      "extra_info": {},
+      "test_id": "T28"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/income-statement",
+      "test_purpose": "Income Statement for HSBC Holdings (HSBC)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "HSBC Holdings",
+      "symbol": "HSBC",
+      "exchange_or_region": "US / Global",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:00.109209+00:00",
+      "extra_info": {},
+      "test_id": "T29"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/income-statement",
+      "test_purpose": "Income Statement UK Listing for HSBC Holdings UK (HSBA.L)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "HSBC Holdings UK",
+      "symbol": "HSBA.L",
+      "exchange_or_region": "US / Global",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:03.373874+00:00",
+      "extra_info": {},
+      "test_id": "T30"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/historical-price-full",
+      "test_purpose": "Historical Daily Prices for NVIDIA (NVDA)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US / Global",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:06.529900+00:00",
+      "extra_info": {},
+      "test_id": "T31"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/historical-price-full",
+      "test_purpose": "Historical Daily Prices for HSBC Holdings (HSBC)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "HSBC Holdings",
+      "symbol": "HSBC",
+      "exchange_or_region": "US / Global",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:09.551897+00:00",
+      "extra_info": {},
+      "test_id": "T32"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/api/v3/historical-price-full",
+      "test_purpose": "Historical Daily Prices for Toyota TSE (7203.T)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "Toyota TSE",
+      "symbol": "7203.T",
+      "exchange_or_region": "US / Global",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:12.656787+00:00",
+      "extra_info": {},
+      "test_id": "T33"
+    },
+    {
+      "provider": "NewsAPI",
+      "endpoint": "https://newsapi.org/v2/everything",
+      "test_purpose": "News Search for NVIDIA",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "N/A",
+      "exchange_or_region": "Global News",
+      "currency": null,
+      "latest_data_date": "2026-11-10T08:40:00Z",
+      "data_fields_returned": [
+        "source",
+        "author",
+        "title",
+        "description",
+        "url",
+        "urlToImage",
+        "publishedAt",
+        "content"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:16.037154+00:00",
+      "extra_info": {
+        "articles_count": 3,
+        "samples": [
+          {
+            "title": "Google will mit spezialisierten Prozessoren gegen Nvidia anstinken",
+            "source": "WinFuture",
+            "publishedAt": "2026-11-10T08:40:00Z",
+            "url": "https://winfuture.de/news,162563.html"
+          },
+          {
+            "title": "Gas prices drop below $4 a gallon after months of pain at the pump",
+            "source": "Yahoo Entertainment",
+            "publishedAt": "2026-11-10T08:39:50Z",
+            "url": "https://finance.yahoo.com/energy/articles/us-gasoline-prices-drop-below-083950459.html"
+          },
+          {
+            "title": "Jensen Huang's fortune takes $7.4 billion hit as Nvidia probes affair",
+            "source": "Business Standard",
+            "publishedAt": "2026-11-10T08:39:40Z",
+            "url": "https://www.business-standard.com/world-news/jensen-huang-wealth-drops-billionaire-rankings-nvidia-probe-126111000349_1.html"
+          }
+        ]
+      },
+      "test_id": "T34"
+    },
+    {
+      "provider": "NewsAPI",
+      "endpoint": "https://newsapi.org/v2/everything",
+      "test_purpose": "News Search for HSBC",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "HSBC",
+      "symbol": "N/A",
+      "exchange_or_region": "Global News",
+      "currency": null,
+      "latest_data_date": "2026-11-10T00:45:55Z",
+      "data_fields_returned": [
+        "source",
+        "author",
+        "title",
+        "description",
+        "url",
+        "urlToImage",
+        "publishedAt",
+        "content"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:18.868351+00:00",
+      "extra_info": {
+        "articles_count": 3,
+        "samples": [
+          {
+            "title": "Global brokerages turn bullish on Indian equities as market rebounds",
+            "source": "The Times of India",
+            "publishedAt": "2026-11-10T00:45:55Z",
+            "url": "https://economictimes.indiatimes.com/markets/stocks/news/brokerages-turn-bullish-on-india-as-inflows-fuel-rally/articleshow/135696007.cms"
+          },
+          {
+            "title": "HSBC, Citi turn bullish as domestic markets draw record inflows",
+            "source": "BusinessLine",
+            "publishedAt": "2026-11-09T07:36:44Z",
+            "url": "https://www.thehindubusinessline.com/markets/hsbc-citi-turn-bullish-as-domestic-markets-draw-record-inflows/article71681706.ece"
+          },
+          {
+            "title": "From a simple China TV reporter to top biz leader in Singapore, how Alice Huang came so close to NVIDIA CEO Jensen Huang",
+            "source": "Livemint",
+            "publishedAt": "2026-11-09T07:15:53Z",
+            "url": "https://www.livemint.com/companies/news/from-a-simple-china-tv-reporter-to-top-biz-leader-in-singapore-how-alice-huang-came-so-close-to-nvidia-ceo-jensen-huang-11794207707848.html"
+          }
+        ]
+      },
+      "test_id": "T35"
+    },
+    {
+      "provider": "NewsAPI",
+      "endpoint": "https://newsapi.org/v2/everything",
+      "test_purpose": "News Search for Toyota",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Toyota",
+      "symbol": "N/A",
+      "exchange_or_region": "Global News",
+      "currency": null,
+      "latest_data_date": "2026-11-10T06:33:00Z",
+      "data_fields_returned": [
+        "source",
+        "author",
+        "title",
+        "description",
+        "url",
+        "urlToImage",
+        "publishedAt",
+        "content"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:21.630410+00:00",
+      "extra_info": {
+        "articles_count": 3,
+        "samples": [
+          {
+            "title": "\"\u00bfPor qu\u00e9 mi hermano s\u00ed y yo no?\": la historia de Maite C\u00e1ceres, la piloto uruguaya motivada por un campe\u00f3n de F1",
+            "source": "Diario EL PAIS Uruguay",
+            "publishedAt": "2026-11-10T06:33:00Z",
+            "url": "https://www.elpais.com.uy/ovacion/multideportivo/por-que-mi-hermano-si-y-yo-no-la-historia-de-maite-caceres-la-piloto-uruguaya-motivada-por-un-campeon-de-f1"
+          },
+          {
+            "title": "Emperor Presents Grand Cordon to Toyota Chairman Akio Toyoda",
+            "source": "Newsonjapan.com",
+            "publishedAt": "2026-11-10T06:12:29Z",
+            "url": "https://newsonjapan.com/article/151313.php"
+          },
+          {
+            "title": "Japan's Nikkei surges nearly 3% as AI stks extend rebound",
+            "source": "The Times of India",
+            "publishedAt": "2026-11-10T03:22:19Z",
+            "url": "https://economictimes.indiatimes.com/markets/us-stocks/news/japans-nikkei-surges-nearly-3-as-ai-stocks-extend-rebound-softbank-jumps-14/articleshow/135697829.cms"
+          }
+        ]
+      },
+      "test_id": "T36"
+    },
+    {
+      "provider": "NewsAPI",
+      "endpoint": "https://newsapi.org/v2/everything",
+      "test_purpose": "News Search for Nestle",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Nestle",
+      "symbol": "N/A",
+      "exchange_or_region": "Global News",
+      "currency": null,
+      "latest_data_date": "2026-11-06T12:42:25Z",
+      "data_fields_returned": [
+        "source",
+        "author",
+        "title",
+        "description",
+        "url",
+        "urlToImage",
+        "publishedAt",
+        "content"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:24.454952+00:00",
+      "extra_info": {
+        "articles_count": 3,
+        "samples": [
+          {
+            "title": "EXCLUSIF. Alimentation\u00a0: comment les g\u00e9ants du tabac ont utilis\u00e9 leurs pires m\u00e9thodes pour vous faire manger n'importe quoi",
+            "source": "60 Millions de consommateurs",
+            "publishedAt": "2026-11-06T12:42:25Z",
+            "url": "https://www.60millions-mag.com/aliments-boissons/article/exclusif-alimentation-comment-les-geants-du-tabac-ont-utilise-leurs-pires-methodes-pour-vous-faire-manger-nimporte-quoi-20261106/"
+          },
+          {
+            "title": "Global FMCG majors bet big on India as sales outshine China, Europe",
+            "source": "Livemint",
+            "publishedAt": "2026-11-06T08:33:45Z",
+            "url": "https://www.livemint.com/industry/global-fmcg-companies-india-fmcg-earnings-india-11793851128647.html"
+          },
+          {
+            "title": "Japan protests as Putin orders takeover of Japan Tobacco's Russia unit",
+            "source": "Business Standard",
+            "publishedAt": "2026-11-06T04:02:50Z",
+            "url": "https://www.business-standard.com/world-news/japan-protests-as-putin-orders-takeover-of-japan-tobacco-s-russia-unit-126110600441_1.html"
+          }
+        ]
+      },
+      "test_id": "T37"
+    },
+    {
+      "provider": "NewsAPI",
+      "endpoint": "https://newsapi.org/v2/everything",
+      "test_purpose": "News Search for Global Markets",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Global Markets",
+      "symbol": "N/A",
+      "exchange_or_region": "Global News",
+      "currency": null,
+      "latest_data_date": "2026-11-10T06:54:18Z",
+      "data_fields_returned": [
+        "source",
+        "author",
+        "title",
+        "description",
+        "url",
+        "urlToImage",
+        "publishedAt",
+        "content"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:27.179788+00:00",
+      "extra_info": {
+        "articles_count": 3,
+        "samples": [
+          {
+            "title": "Nikkei Reclaims 60,000 With 2.8% Jump as SoftBank Surges and Chip Stocks Extend Rebound From Friday's Rout",
+            "source": "Ibtimes.com.au",
+            "publishedAt": "2026-11-10T06:54:18Z",
+            "url": "https://www.ibtimes.com.au/nikkei-225-rises-above-60000-softbank-chip-stocks-1878258"
+          },
+          {
+            "title": "Is AI selloff a window to buy? Morgan Stanley sees multiple buying opportunities on Wall Street",
+            "source": "The Times of India",
+            "publishedAt": "2026-11-10T06:13:43Z",
+            "url": "https://economictimes.indiatimes.com/markets/stocks/news/is-ai-selloff-a-window-to-buy-morgan-stanley-sees-multiple-buying-opportunities-on-wall-street/articleshow/135701512.cms"
+          },
+          {
+            "title": "Mitsotakis\u2019 raised voice, Athens next in line for tax crackdown, building rules row and Eurobank takeover speculation",
+            "source": "Protothema.gr",
+            "publishedAt": "2026-11-10T05:27:52Z",
+            "url": "https://en.protothema.gr/2026/11/10/mitsotakis-raised-voice-athens-next-in-line-for-tax-crackdown-building-rules-row-and-eurobank-takeover-speculation/"
+          }
+        ]
+      },
+      "test_id": "T38"
+    },
+    {
+      "provider": "Nasdaq Data Link",
+      "endpoint": "https://data.nasdaq.com/api/v3/datasets.json",
+      "test_purpose": "Dataset Search (stock prices)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "General Market",
+      "symbol": "N/A",
+      "exchange_or_region": "Global / US",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:30.048572+00:00",
+      "extra_info": {
+        "sample_datasets": []
+      },
+      "test_id": "T39"
+    },
+    {
+      "provider": "Nasdaq Data Link",
+      "endpoint": "https://data.nasdaq.com/api/v3/datasets/FRED/GDP.json",
+      "test_purpose": "Fetch Free Economic Dataset (FRED/GDP)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "US Macro",
+      "symbol": "FRED/GDP",
+      "exchange_or_region": "United States",
+      "currency": "USD (Billions)",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:32.886644+00:00",
+      "extra_info": {},
+      "test_id": "T40"
+    },
+    {
+      "provider": "Nasdaq Data Link",
+      "endpoint": "https://data.nasdaq.com/api/v3/datasets/WIKI/NVDA.json",
+      "test_purpose": "Check Legacy Free US Equity Dataset (WIKI/NVDA)",
+      "status": "FAILED",
+      "http_status": 403,
+      "sanitized_error": "HTTPError 403: Forbidden",
+      "company": "NVIDIA",
+      "symbol": "WIKI/NVDA",
+      "exchange_or_region": "United States",
+      "currency": "USD",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:35.937496+00:00",
+      "extra_info": {},
+      "test_id": "T41"
+    },
+    {
+      "provider": "Nasdaq Data Link",
+      "endpoint": "https://data.nasdaq.com/api/v3/datatables/SHARADAR/SEP.json",
+      "test_purpose": "Check Modern US Equity Premium Dataset (SHARADAR/SEP)",
+      "status": "FAILED",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "SHARADAR/SEP",
+      "exchange_or_region": "United States",
+      "currency": "USD",
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:40:39.241770+00:00",
+      "extra_info": {
+        "access_permitted": true
+      },
+      "test_id": "T42"
+    },
+    {
+      "provider": "SEC EDGAR",
+      "endpoint": "https://www.sec.gov/files/company_tickers.json",
+      "test_purpose": "Company Ticker to CIK Directory Lookup",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Global Index",
+      "symbol": "ALL",
+      "exchange_or_region": "United States SEC Registry",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "cik_str",
+        "ticker",
+        "title"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:42.140163+00:00",
+      "extra_info": {
+        "total_tickers_indexed": 10414,
+        "sample_entry": {
+          "cik_str": 320193,
+          "ticker": "AAPL",
+          "title": "Apple Inc."
+        }
+      },
+      "test_id": "T43"
+    },
+    {
+      "provider": "SEC EDGAR",
+      "endpoint": "https://data.sec.gov/submissions/CIK{cik}.json",
+      "test_purpose": "Company Submissions for NVIDIA (Domestic 10-K / 10-Q)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "SEC Submissions",
+      "currency": null,
+      "latest_data_date": "2026-11-06",
+      "data_fields_returned": [
+        "cik",
+        "entityType",
+        "sic",
+        "name",
+        "tickers",
+        "exchanges",
+        "filings"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:44.777252+00:00",
+      "extra_info": {
+        "cik": "0001045810",
+        "sic": "3674",
+        "sicDescription": "Semiconductors & Related Devices",
+        "name": "NVIDIA CORP",
+        "tickers": [
+          "NVDA"
+        ],
+        "exchanges": [
+          "Nasdaq"
+        ],
+        "latest_filing_form": "4",
+        "latest_filing_date": "2026-11-06",
+        "recent_filings_count": 1001
+      },
+      "test_id": "T44"
+    },
+    {
+      "provider": "SEC EDGAR",
+      "endpoint": "https://data.sec.gov/submissions/CIK{cik}.json",
+      "test_purpose": "Company Submissions for HSBC Holdings plc (Foreign Private Issuer (20-F / 6-K))",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "HSBC Holdings plc",
+      "symbol": "HSBC",
+      "exchange_or_region": "SEC Submissions",
+      "currency": null,
+      "latest_data_date": "2026-11-04",
+      "data_fields_returned": [
+        "cik",
+        "entityType",
+        "sic",
+        "name",
+        "tickers",
+        "exchanges",
+        "filings"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:46.993506+00:00",
+      "extra_info": {
+        "cik": "0001140465",
+        "sic": "6029",
+        "sicDescription": "Commercial Banks, NEC",
+        "name": "HSBC BANK PLC",
+        "tickers": [],
+        "exchanges": [],
+        "latest_filing_form": "13F-NT",
+        "latest_filing_date": "2026-11-04",
+        "recent_filings_count": 630
+      },
+      "test_id": "T45"
+    },
+    {
+      "provider": "SEC EDGAR",
+      "endpoint": "https://data.sec.gov/submissions/CIK{cik}.json",
+      "test_purpose": "Company Submissions for Toyota Motor Corp (Foreign Private Issuer (20-F / 6-K))",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "Toyota Motor Corp",
+      "symbol": "TM",
+      "exchange_or_region": "SEC Submissions",
+      "currency": null,
+      "latest_data_date": "2026-11-10",
+      "data_fields_returned": [
+        "cik",
+        "entityType",
+        "sic",
+        "name",
+        "tickers",
+        "exchanges",
+        "filings"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:49.224260+00:00",
+      "extra_info": {
+        "cik": "0001094517",
+        "sic": "3711",
+        "sicDescription": "Motor Vehicles & Passenger Car Bodies",
+        "name": "TOYOTA MOTOR CORP/",
+        "tickers": [
+          "TM",
+          "TOYOF"
+        ],
+        "exchanges": [
+          "NYSE",
+          "OTC"
+        ],
+        "latest_filing_form": "13F-HR",
+        "latest_filing_date": "2026-11-10",
+        "recent_filings_count": 1001
+      },
+      "test_id": "T46"
+    },
+    {
+      "provider": "SEC EDGAR",
+      "endpoint": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001045810.json",
+      "test_purpose": "Company Facts / XBRL Financials for NVIDIA",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US GAAP XBRL",
+      "currency": "USD",
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "AcceleratedShareRepurchaseProgramAdjustment",
+        "AcceleratedShareRepurchasesFinalPricePaidPerShare",
+        "AcceleratedShareRepurchasesSettlementPaymentOrReceipt",
+        "AccountsPayableCurrent",
+        "AccountsReceivableNetCurrent",
+        "AccruedIncomeTaxesNoncurrent",
+        "AccruedIncomeTaxesPayable",
+        "AccruedLiabilitiesCurrent",
+        "AccruedProfessionalFeesCurrentAndNoncurrent",
+        "AccruedRentCurrent",
+        "AccruedRentNoncurrent",
+        "AccruedRoyaltiesCurrent",
+        "AccumulatedDepreciationDepletionAndAmortizationPropertyPlantAndEquipment",
+        "AccumulatedOtherComprehensiveIncomeLossCumulativeChangesInNetGainLossFromCashFlowHedgesEffectNetOfTax",
+        "AccumulatedOtherComprehensiveIncomeLossNetOfTax"
+      ],
+      "timestamp_utc": "2026-11-11T08:40:52.968172+00:00",
+      "extra_info": {
+        "entityName": "NVIDIA CORP",
+        "cik": 1045810,
+        "us_gaap_concepts_count": 627,
+        "dei_concepts_count": 2,
+        "sample_concepts": [
+          "AcceleratedShareRepurchaseProgramAdjustment",
+          "AcceleratedShareRepurchasesFinalPricePaidPerShare",
+          "AcceleratedShareRepurchasesSettlementPaymentOrReceipt",
+          "AccountsPayableCurrent",
+          "AccountsReceivableNetCurrent",
+          "AccruedIncomeTaxesNoncurrent",
+          "AccruedIncomeTaxesPayable",
+          "AccruedLiabilitiesCurrent",
+          "AccruedProfessionalFeesCurrentAndNoncurrent",
+          "AccruedRentCurrent"
+        ]
+      },
+      "test_id": "T47"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/stable/search-name",
+      "test_purpose": "Company Name Search under /stable/ architecture (NVIDIA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "NASDAQ / Global",
+      "currency": "USD",
+      "latest_data_date": null,
+      "data_fields_returned": [
+        "symbol",
+        "name",
+        "currency",
+        "exchangeFullName",
+        "exchange"
+      ],
+      "timestamp_utc": "2026-11-11T08:46:01.677793+00:00",
+      "extra_info": {
+        "notes": "FMP migrated from deprecated /api/v3 to /stable/. Succeeded on /stable/."
+      },
+      "test_id": "T48"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/stable/profile",
+      "test_purpose": "Company Profile under /stable/ (NVDA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "NASDAQ",
+      "currency": "USD",
+      "latest_data_date": "2026-11-10",
+      "data_fields_returned": [
+        "symbol",
+        "price",
+        "marketCap",
+        "beta",
+        "companyName",
+        "currency",
+        "exchangeShortName"
+      ],
+      "timestamp_utc": "2026-11-11T08:46:01.677814+00:00",
+      "extra_info": {
+        "price": 168.89,
+        "marketCap": 4070249000000
+      },
+      "test_id": "T49"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/stable/profile",
+      "test_purpose": "Company Profile under /stable/ for US ADRs (HSBC, TM)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "HSBC Holdings & Toyota Motor",
+      "symbol": "HSBC, TM",
+      "exchange_or_region": "NYSE (US ADR)",
+      "currency": "USD",
+      "latest_data_date": "2026-11-10",
+      "data_fields_returned": [
+        "symbol",
+        "price",
+        "marketCap",
+        "companyName"
+      ],
+      "timestamp_utc": "2026-11-11T08:46:01.677819+00:00",
+      "extra_info": {
+        "notes": "US ADR listings accessible on free plan; direct foreign exchange listings locked."
+      },
+      "test_id": "T50"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/stable/profile",
+      "test_purpose": "Company Profile for Direct Foreign Listings (HSBA.L, 7203.T, NESN.SW)",
+      "status": "TIER_RESTRICTED (402)",
+      "http_status": 402,
+      "sanitized_error": "Special Endpoint: This value set for 'symbol' is not available under your current subscription",
+      "company": "HSBC, Toyota, Nestle (Local Exchanges)",
+      "symbol": "HSBA.L, 7203.T, NESN.SW",
+      "exchange_or_region": "LSE, TSE, SIX",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:46:01.677825+00:00",
+      "extra_info": {
+        "restriction": "Non-US direct exchanges require paid subscription."
+      },
+      "test_id": "T51"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/stable/income-statement",
+      "test_purpose": "Annual & Quarterly Income Statement (NVDA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US (SEC)",
+      "currency": "USD",
+      "latest_data_date": "2026-01-25",
+      "data_fields_returned": [
+        "date",
+        "symbol",
+        "reportedCurrency",
+        "cik",
+        "filingDate",
+        "revenue",
+        "grossProfit",
+        "netIncome",
+        "eps"
+      ],
+      "timestamp_utc": "2026-11-11T08:46:01.677829+00:00",
+      "extra_info": {
+        "revenue_FY26": 215938000000,
+        "fiscalYear": "2026"
+      },
+      "test_id": "T52"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/stable/balance-sheet-statement",
+      "test_purpose": "Balance Sheet Statement (NVDA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US (SEC)",
+      "currency": "USD",
+      "latest_data_date": "2026-01-25",
+      "data_fields_returned": [
+        "date",
+        "symbol",
+        "totalAssets",
+        "totalLiabilities",
+        "totalStockholdersEquity"
+      ],
+      "timestamp_utc": "2026-11-11T08:46:01.677834+00:00",
+      "extra_info": {
+        "periods_returned": 3
+      },
+      "test_id": "T53"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/stable/cash-flow-statement",
+      "test_purpose": "Cash Flow Statement (NVDA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "US (SEC)",
+      "currency": "USD",
+      "latest_data_date": "2026-01-25",
+      "data_fields_returned": [
+        "date",
+        "symbol",
+        "netCashProvidedByOperatingActivities",
+        "capitalExpenditure",
+        "freeCashFlow"
+      ],
+      "timestamp_utc": "2026-11-11T08:46:01.677837+00:00",
+      "extra_info": {
+        "periods_returned": 3
+      },
+      "test_id": "T54"
+    },
+    {
+      "provider": "Financial Modeling Prep",
+      "endpoint": "https://financialmodelingprep.com/stable/historical-price-eod/full",
+      "test_purpose": "Historical Daily OHLCV Prices (NVDA)",
+      "status": "SUCCESS",
+      "http_status": 200,
+      "sanitized_error": null,
+      "company": "NVIDIA",
+      "symbol": "NVDA",
+      "exchange_or_region": "NASDAQ",
+      "currency": "USD",
+      "latest_data_date": "2026-11-10",
+      "data_fields_returned": [
+        "symbol",
+        "date",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "change",
+        "changePercent"
+      ],
+      "timestamp_utc": "2026-11-11T08:46:01.677839+00:00",
+      "extra_info": {
+        "open": 173.98,
+        "high": 174.69,
+        "low": 165.89,
+        "close": 168.89,
+        "volume": 427096957
+      },
+      "test_id": "T55"
+    },
+    {
+      "provider": "Twelve Data",
+      "endpoint": "https://api.twelvedata.com/time_series",
+      "test_purpose": "Daily OHLCV for Foreign Primary Listings (LSE: HSBA, JPX: 7203, SIX: NESN)",
+      "status": "TIER_RESTRICTED (404 / Plan Upgrade Required)",
+      "http_status": 404,
+      "sanitized_error": "LSE: HSBA requires Grow ($79/mo) or Venture ($499/mo); SIX: NESN requires Pro ($229/mo) or Venture ($499/mo); JPX: 7203 returned 'Data not found'",
+      "company": "HSBC Holdings, Toyota Motor, Nestle SA",
+      "symbol": "HSBA, 7203, NESN",
+      "exchange_or_region": "LSE (UK), JPX (Japan), SIX (Switzerland)",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:46:01.677842+00:00",
+      "extra_info": {
+        "LSE_HSBA": "Available starting with Grow plan ($79/mo) or Venture plan ($499/mo)",
+        "SIX_NESN": "Available starting with Pro plan ($229/mo) or Venture plan ($499/mo)",
+        "JPX_7203": "Returned 'Data not found' (unsupported symbol/exchange on basic endpoint, distinct from explicit plan upgrade)"
+      },
+      "test_id": "T56"
+    },
+    {
+      "provider": "Nasdaq Data Link",
+      "endpoint": "https://data.nasdaq.com/api/v3/datasets/...",
+      "test_purpose": "API Gateway and Bot Defense Verification",
+      "status": "WAF_BLOCKED (403)",
+      "http_status": 403,
+      "sanitized_error": "Imperva / Incapsula WAF Anti-Bot Challenge encountered on automated client requests",
+      "company": "Macro & Equity Datasets",
+      "symbol": "FRED/GDP, WIKI/NVDA",
+      "exchange_or_region": "Global / US",
+      "currency": null,
+      "latest_data_date": null,
+      "data_fields_returned": [],
+      "timestamp_utc": "2026-11-11T08:46:01.677845+00:00",
+      "extra_info": {
+        "root_cause": "Programmatic API calls encountered Imperva/Incapsula WAF challenge page. WIKI dataset ceased updates March 2018. Modern active equity datasets (e.g. Sharadar) require commercial subscription. Free public data exists for macroeconomic/FRED feeds."
+      },
+      "test_id": "T57"
+    }
+  ]
+}
