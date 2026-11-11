@@ -192,7 +192,7 @@ export const WatchlistDrawer: React.FC<WatchlistDrawerProps> = ({
                   {hasPrice ? (
                     <>
                       <div className="text-xs font-bold text-slate-100">
-                        {item.currency} {item.price?.toFixed(2)}
+                        {item.currency} {item.price != null && !isNaN(Number(item.price)) ? Number(item.price).toFixed(2) : '—'}
                       </div>
                       <div
                         className={`text-[11px] font-semibold flex items-center justify-end gap-0.5 ${
@@ -201,7 +201,9 @@ export const WatchlistDrawer: React.FC<WatchlistDrawerProps> = ({
                       >
                         {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                         <span>
-                          {isUp ? '+' : ''}{item.change?.toFixed(2)} ({isUp ? '+' : ''}{item.change_percent?.toFixed(2)}%)
+                          {item.change != null && !isNaN(Number(item.change))
+                            ? `${isUp ? '+' : ''}${Number(item.change).toFixed(2)} (${item.change_percent != null && !isNaN(Number(item.change_percent)) ? `${isUp ? '+' : ''}${Number(item.change_percent).toFixed(2)}%` : '—'})`
+                            : '—'}
                         </span>
                       </div>
                     </>

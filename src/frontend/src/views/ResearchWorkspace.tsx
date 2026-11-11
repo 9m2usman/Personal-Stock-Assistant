@@ -222,7 +222,7 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
                 const cap = companyData[sym]?.fundamentals?.profile?.market_cap;
                 return (
                   <td key={sym} className="py-3 text-right font-bold text-[var(--text-primary)]">
-                    {cap ? `$${(cap / 1e9).toFixed(2)}B` : '—'}
+                    {cap != null && !isNaN(Number(cap)) ? `$${(Number(cap) / 1e9).toFixed(2)}B` : '—'}
                   </td>
                 );
               })}
@@ -234,7 +234,7 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
                 const pe = companyData[sym]?.fundamentals?.ratios?.pe_ratio;
                 return (
                   <td key={sym} className="py-3 text-right font-bold text-emerald-400">
-                    {pe ? pe.toFixed(2) : '—'}
+                    {pe != null && !isNaN(Number(pe)) ? Number(pe).toFixed(2) : '—'}
                   </td>
                 );
               })}
@@ -246,7 +246,7 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
                 const rev = companyData[sym]?.fundamentals?.latest_income_statement?.total_revenue;
                 return (
                   <td key={sym} className="py-3 text-right font-bold">
-                    {rev ? `$${(rev / 1e9).toFixed(2)}B` : '—'}
+                    {rev != null && !isNaN(Number(rev)) ? `$${(Number(rev) / 1e9).toFixed(2)}B` : '—'}
                   </td>
                 );
               })}
@@ -258,7 +258,7 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
                 const gm = companyData[sym]?.fundamentals?.ratios?.gross_margin;
                 return (
                   <td key={sym} className="py-3 text-right text-emerald-400 font-bold">
-                    {gm ? `${(gm * 100).toFixed(1)}%` : '—'}
+                    {gm != null && !isNaN(Number(gm)) ? `${(Number(gm) * 100).toFixed(1)}%` : '—'}
                   </td>
                 );
               })}
@@ -270,7 +270,7 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
                 const nm = companyData[sym]?.fundamentals?.ratios?.net_margin;
                 return (
                   <td key={sym} className="py-3 text-right font-bold">
-                    {nm ? `${(nm * 100).toFixed(1)}%` : '—'}
+                    {nm != null && !isNaN(Number(nm)) ? `${(Number(nm) * 100).toFixed(1)}%` : '—'}
                   </td>
                 );
               })}
@@ -282,7 +282,7 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
                 const de = companyData[sym]?.fundamentals?.ratios?.debt_to_equity;
                 return (
                   <td key={sym} className="py-3 text-right text-[var(--text-secondary)]">
-                    {de ? de.toFixed(2) : '—'}
+                    {de != null && !isNaN(Number(de)) ? Number(de).toFixed(2) : '—'}
                   </td>
                 );
               })}

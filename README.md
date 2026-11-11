@@ -132,22 +132,73 @@ For full infrastructure-as-code and architectural blueprints covering **AWS ECS 
 
 ---
 
+## Native Windows Quickstart (Zero-Docker Full Stack)
+
+INKVECTOR includes portable native Windows Redis binaries and zero-friction batch scripts so you can launch the entire stack on Windows without Docker or WSL:
+
+### Option A: One-Click Launch (All 4 Services)
+Double-click [`start_all.bat`](start_all.bat) or run from PowerShell:
+```cmd
+.\start_all.bat
+```
+*This concurrently starts Redis (port 6379), Celery Worker (`solo` pool), FastAPI Backend (port 8000), and React 19 Frontend (port 3000) in dedicated windows.*
+
+---
+
+### Option B: Component-by-Component Launch
+
+1. **Start Native Windows Redis:**
+   ```cmd
+   .\start_redis.bat
+   ```
+   *(Runs `tools\redis\redis-server.exe tools\redis\redis.windows.conf` on `127.0.0.1:6379`)*
+
+2. **Start Celery Background Worker:**
+   ```cmd
+   .\start_celery.bat
+   ```
+   *(Executes `python -m celery -A src.backend.workers.celery_app worker -P solo -l info`)*
+
+3. **Start FastAPI Backend:**
+   ```cmd
+   .\start_backend.bat
+   ```
+   *(Or: `python -m uvicorn src.backend.main:app --host 127.0.0.1 --port 8000 --reload`)*
+
+4. **Start Vite React Frontend:**
+   ```cmd
+   .\start_frontend.bat
+   ```
+   *(Or: `cd src/frontend && npm run dev`)*
+
+---
+
+## Web Application Access
+- **Web Dashboard:** [http://localhost:3000](http://localhost:3000)
+- **FastAPI Swagger Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **FastAPI OpenAPI Schema:** [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json)
+
+---
+
+## Automated Acceptance Test Suite (Tests A–H)
+
+Run the full acceptance verification suite covering global discovery, AI comparison, buy/sell scenarios, sentiment, and background processing:
+```cmd
+pytest tests/test_global_stock_and_scenarios.py -v
+```
+```
+============================= 8 passed in 32.89s =============================
+- Test A: Global Stock Discovery (US, UK, Japan, Switzerland) PASSED
+- Test B: Multi-Provider Price Retrieval & Provenance PASSED
+- Test C: AI Stock Comparison Matrix (NVIDIA vs AMD) PASSED
+- Test D: Buy/Sell Scenario Simulation with HHI Delta PASSED
+- Test E: Multi-Source Sentiment Analysis (-1.0 to +1.0) PASSED
+- Test F: Celery and Redis Native Windows Task Processing PASSED
+- Test G: Chat Response Reliability (Non-Empty / Zero-Hallucination) PASSED
+- Test H: Portfolio Multi-Currency & Concentration Normalization PASSED
+```
+
+---
+
 ## License & Compliance
 This software is developed strictly for research, quantitative analysis, and educational purposes. All data providers operate under their respective licensing terms and fair-access limits.
-
-
-# running ...
-
-# Option 1: One-Click Docker Launch (Recommended)
-bash
-docker compose up --build
-Web UI: http://localhost:3000
-FastAPI Documentation: http://localhost:8000/docs
-
-# Option 2: Local Developer Launch
-powershell
-# Launch backend
-uvicorn src.backend.main:app --reload --port 8000
-# In a second terminal, launch frontend
-cd src/frontend
-npm run dev

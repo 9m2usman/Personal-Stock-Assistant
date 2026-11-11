@@ -132,7 +132,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
         {/* Price & Change Widget */}
         <div className="text-left md:text-right bg-[var(--bg-card)] md:bg-transparent p-3 md:p-0 rounded-xl border md:border-0 border-[var(--border-subtle)] w-full md:w-auto">
           <div className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] font-mono tabular-nums">
-            {quote?.price !== null && quote?.price !== undefined ? `$${quote.price.toFixed(2)}` : '—'}
+            {quote?.price != null && !isNaN(Number(quote.price)) ? `$${Number(quote.price).toFixed(2)}` : '—'}
           </div>
           <div
             className={`text-xs font-mono font-bold flex items-center md:justify-end gap-1 mt-0.5 ${
@@ -141,9 +141,9 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
           >
             {isPos ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
             <span>
-              {quote?.change !== null && quote?.change !== undefined
-                ? `${isPos ? '+' : ''}${quote.change.toFixed(2)} (${isPos ? '+' : ''}${quote.change_percent?.toFixed(2)}%)`
-                : '0.00 (0.00%)'}
+              {quote?.change != null && !isNaN(Number(quote.change))
+                ? `${isPos ? '+' : ''}${Number(quote.change).toFixed(2)} (${quote.change_percent != null && !isNaN(Number(quote.change_percent)) ? `${isPos ? '+' : ''}${Number(quote.change_percent).toFixed(2)}%` : '—'})`
+                : '—'}
             </span>
           </div>
         </div>
@@ -476,9 +476,27 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
               Corporate Headlines for {symbol}
             </h3>
             {sentiment && (
-              <span className="text-xs font-mono font-bold text-emerald-400 px-2.5 py-0.5 rounded bg-emerald-500/10">
-                {sentiment.classification} Polarity ({sentiment.aggregate_score?.toFixed(2)})
-              </span>
+              (() => {
+                const score = typeof sentiment.aggregate_score === 'number'
+                  ? sentiment.aggregate_score
+                  : typeof sentiment.average_sentiment_score === 'number'
+                  ? sentiment.average_sentiment_score
+                  : null;
+                const label = sentiment.classification || sentiment.sentiment_label || 'NEUTRAL';
+                const isBull = label === 'BULLISH' || label === 'POSITIVE' || (score !== null && score > 0.15);
+                const isBear = label === 'BEARISH' || label === 'NEGATIVE' || (score !== null && score < -0.15);
+                const badgeClass = isBear
+                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  : isBull
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)]';
+                const formattedScore = score != null ? (score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2)) : '—';
+                return (
+                  <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded ${badgeClass}`}>
+                    {label} Polarity ({formattedScore})
+                  </span>
+                );
+              })()
             )}
           </div>
 
@@ -495,7 +513,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                   {art.title}
                 </div>
                 <div className="flex items-center justify-between mt-1 text-[10px] text-[var(--text-muted)] font-mono">
-                  <span>{art.publisher} · {art.published_at ? new Date(art.published_at).toLocaleDateString() : 'Recent'}</span>
+                  <span>{art.publisher || art.source || 'Financial Media'} · {art.published_at ? new Date(art.published_at).toLocaleDateString() : 'Recent'}</span>
                   <span className="text-emerald-400 flex items-center gap-1">
                     Source Link <ExternalLink className="w-2.5 h-2.5" />
                   </span>

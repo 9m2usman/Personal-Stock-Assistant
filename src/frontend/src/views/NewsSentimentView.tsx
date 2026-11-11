@@ -12,7 +12,7 @@ import {
   RefreshCw,
   Sparkles
 } from 'lucide-react';
-import { fetchCompanySentiment, searchNews } from '../api/client.ts';
+import { fetchCompanySentiment, searchNews, CompanySentiment } from '../api/client.ts';
 
 interface NewsSentimentViewProps {
   initialSymbol?: string;
@@ -24,7 +24,7 @@ export const NewsSentimentView: React.FC<NewsSentimentViewProps> = ({
   onSelectSymbol,
 }) => {
   const [query, setQuery] = useState(initialSymbol);
-  const [sentiment, setSentiment] = useState<any>(null);
+  const [sentiment, setSentiment] = useState<CompanySentiment | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -135,12 +135,28 @@ export const NewsSentimentView: React.FC<NewsSentimentViewProps> = ({
               <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 Aggregate Sentiment
               </div>
-              <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 font-mono mt-1">
-                {sentiment.classification}
-              </div>
-              <div className="text-[11px] text-[var(--text-muted)] font-mono mt-0.5">
-                Polarity Score: {sentiment.aggregate_score > 0 ? `+${sentiment.aggregate_score.toFixed(2)}` : sentiment.aggregate_score.toFixed(2)}
-              </div>
+              {(() => {
+                const score = typeof sentiment.aggregate_score === 'number'
+                  ? sentiment.aggregate_score
+                  : typeof sentiment.average_sentiment_score === 'number'
+                  ? sentiment.average_sentiment_score
+                  : null;
+                const label = sentiment.classification || sentiment.sentiment_label || 'NEUTRAL';
+                const isBull = label === 'BULLISH' || label === 'POSITIVE' || (score !== null && score > 0.15);
+                const isBear = label === 'BEARISH' || label === 'NEGATIVE' || (score !== null && score < -0.15);
+                const textColor = isBear ? 'text-rose-400' : isBull ? 'text-emerald-400' : 'text-[var(--text-secondary)]';
+                const formattedScore = score != null ? (score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2)) : '—';
+                return (
+                  <>
+                    <div className={`text-xl sm:text-2xl font-extrabold font-mono mt-1 ${textColor}`}>
+                      {label}
+                    </div>
+                    <div className="text-[11px] text-[var(--text-muted)] font-mono mt-0.5">
+                      Polarity Score: {formattedScore}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
@@ -148,7 +164,7 @@ export const NewsSentimentView: React.FC<NewsSentimentViewProps> = ({
                 Bullish Frequency
               </div>
               <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 font-mono mt-1 tabular-nums">
-                {sentiment.breakdown?.bullish || 0} Articles
+                {sentiment.breakdown?.bullish ?? sentiment.breakdown?.positive ?? 0} Articles
               </div>
               <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
                 Positive catalyst mentions
@@ -160,7 +176,7 @@ export const NewsSentimentView: React.FC<NewsSentimentViewProps> = ({
                 Neutral / Balanced
               </div>
               <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-secondary)] font-mono mt-1 tabular-nums">
-                {sentiment.breakdown?.neutral || 0} Articles
+                {sentiment.breakdown?.neutral ?? 0} Articles
               </div>
               <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
                 General corporate reporting
@@ -172,7 +188,7 @@ export const NewsSentimentView: React.FC<NewsSentimentViewProps> = ({
                 Bearish Frequency
               </div>
               <div className="text-xl sm:text-2xl font-extrabold text-rose-400 font-mono mt-1 tabular-nums">
-                {sentiment.breakdown?.bearish || 0} Articles
+                {sentiment.breakdown?.bearish ?? sentiment.breakdown?.negative ?? 0} Articles
               </div>
               <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
                 Risk & downgrade coverage
@@ -184,7 +200,7 @@ export const NewsSentimentView: React.FC<NewsSentimentViewProps> = ({
           <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-xs text-[var(--text-muted)] flex items-start gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-[var(--text-primary)]">Methodology Disclaimer:</strong> Sentiment scores are computed via Loughran-McDonald institutional financial keyword dictionaries across {sentiment.sample_count} sampled articles. News sentiment reflects current market discussion and should not be construed as a financial price forecast.
+              <strong className="text-[var(--text-primary)]">Methodology Disclaimer:</strong> Sentiment scores are computed via Loughran-McDonald institutional financial keyword dictionaries across {sentiment.sample_count ?? sentiment.total_articles ?? sentiment.articles?.length ?? 0} sampled articles. News sentiment reflects current market discussion and should not be construed as a financial price forecast.
             </div>
           </div>
 
@@ -215,7 +231,7 @@ export const NewsSentimentView: React.FC<NewsSentimentViewProps> = ({
 
                   <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] text-[var(--text-muted)] font-mono">
                     <div className="flex items-center gap-3">
-                      <span>Publisher: <strong className="text-[var(--text-primary)]">{art.publisher}</strong></span>
+                      <span>Publisher: <strong className="text-[var(--text-primary)]">{art.publisher || art.source || 'Financial Media'}</strong></span>
                       <span>·</span>
                       <span>Published: {art.published_at ? new Date(art.published_at).toLocaleString() : 'Recent'}</span>
                     </div>

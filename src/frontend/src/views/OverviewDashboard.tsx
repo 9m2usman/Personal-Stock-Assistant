@@ -25,7 +25,8 @@ import {
   fetchWatchlist,
   fetchCompanySentiment,
   searchNews,
-  WatchlistItem
+  WatchlistItem,
+  CompanySentiment
 } from '../api/client.ts';
 import { CandlestickChart } from '../components/CandlestickChart.tsx';
 import { GlobalMarketGlobe3D } from '../components/GlobalMarketGlobe3D.tsx';
@@ -49,7 +50,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   const [quote, setQuote] = useState<any>(null);
   const [technicals, setTechnicals] = useState<any>(null);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
-  const [sentiment, setSentiment] = useState<any>(null);
+  const [sentiment, setSentiment] = useState<CompanySentiment | null>(null);
   const [articles, setArticles] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [portfolioAnalytics, setPortfolioAnalytics] = useState<any>(() => {
@@ -170,10 +171,14 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               Total Monitored NAV ({portfolioAnalytics.base_currency || 'USD'})
             </div>
             <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] tabular-nums mt-1 font-mono">
-              ${portfolioAnalytics.total_market_value?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {portfolioAnalytics.total_market_value != null && !isNaN(Number(portfolioAnalytics.total_market_value))
+                ? `$${Number(portfolioAnalytics.total_market_value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : '—'}
             </div>
             <div className="text-[11px] text-[var(--text-muted)] font-mono mt-1">
-              Cost Basis: ${portfolioAnalytics.total_cost_basis?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              Cost Basis: {portfolioAnalytics.total_cost_basis != null && !isNaN(Number(portfolioAnalytics.total_cost_basis))
+                ? `$${Number(portfolioAnalytics.total_cost_basis).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : '—'}
             </div>
           </div>
 
@@ -183,25 +188,35 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
             </div>
             <div
               className={`text-xl sm:text-2xl font-extrabold tabular-nums mt-1 font-mono ${
-                (portfolioAnalytics.total_unrealized_pnl || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                portfolioAnalytics.total_unrealized_pnl != null && Number(portfolioAnalytics.total_unrealized_pnl) < 0
+                  ? 'text-rose-400'
+                  : portfolioAnalytics.total_unrealized_pnl != null && Number(portfolioAnalytics.total_unrealized_pnl) > 0
+                  ? 'text-emerald-400'
+                  : 'text-[var(--text-muted)]'
               }`}
             >
-              {(portfolioAnalytics.total_unrealized_pnl || 0) >= 0 ? '+' : ''}$
-              {portfolioAnalytics.total_unrealized_pnl?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {portfolioAnalytics.total_unrealized_pnl != null && !isNaN(Number(portfolioAnalytics.total_unrealized_pnl))
+                ? `${Number(portfolioAnalytics.total_unrealized_pnl) >= 0 ? '+' : '-'}$${Math.abs(Number(portfolioAnalytics.total_unrealized_pnl)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : '—'}
             </div>
             <div
               className={`text-[11px] font-mono font-semibold mt-1 flex items-center gap-1 ${
-                (portfolioAnalytics.total_unrealized_pnl_percent || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                portfolioAnalytics.total_unrealized_pnl_percent != null && Number(portfolioAnalytics.total_unrealized_pnl_percent) < 0
+                  ? 'text-rose-400'
+                  : portfolioAnalytics.total_unrealized_pnl_percent != null && Number(portfolioAnalytics.total_unrealized_pnl_percent) > 0
+                  ? 'text-emerald-400'
+                  : 'text-[var(--text-muted)]'
               }`}
             >
-              {(portfolioAnalytics.total_unrealized_pnl_percent || 0) >= 0 ? (
-                <TrendingUp className="w-3.5 h-3.5" />
-              ) : (
+              {portfolioAnalytics.total_unrealized_pnl_percent != null && Number(portfolioAnalytics.total_unrealized_pnl_percent) < 0 ? (
                 <TrendingDown className="w-3.5 h-3.5" />
+              ) : (
+                <TrendingUp className="w-3.5 h-3.5" />
               )}
               <span>
-                {(portfolioAnalytics.total_unrealized_pnl_percent || 0) >= 0 ? '+' : ''}
-                {portfolioAnalytics.total_unrealized_pnl_percent?.toFixed(2)}% Return on Capital
+                {portfolioAnalytics.total_unrealized_pnl_percent != null && !isNaN(Number(portfolioAnalytics.total_unrealized_pnl_percent))
+                  ? `${Number(portfolioAnalytics.total_unrealized_pnl_percent) >= 0 ? '+' : ''}${Number(portfolioAnalytics.total_unrealized_pnl_percent).toFixed(2)}% Return on Capital`
+                  : '— Return on Capital'}
               </span>
             </div>
           </div>
@@ -216,7 +231,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               </span>
               {quote && (
                 <span className="text-sm font-bold text-[var(--text-primary)] tabular-nums font-mono">
-                  ${quote.price?.toFixed(2)}
+                  {quote.price != null && !isNaN(Number(quote.price)) ? `$${Number(quote.price).toFixed(2)}` : '—'}
                 </span>
               )}
             </div>
@@ -231,7 +246,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 Concentration Index
               </div>
               <div className="text-lg font-bold text-[var(--text-primary)] mt-1 font-mono">
-                HHI {portfolioAnalytics.herfindahl_index?.toFixed(3) || '—'} · {portfolioAnalytics.concentration_risk_level || 'EVALUATED'}
+                HHI {portfolioAnalytics.herfindahl_index != null ? Number(portfolioAnalytics.herfindahl_index).toFixed(3) : '—'} · {portfolioAnalytics.concentration_risk_level || 'EVALUATED'}
               </div>
             </div>
             <button
@@ -412,18 +427,20 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
 
                     <div className="text-right">
                       <div className="text-xs font-bold font-mono text-[var(--text-primary)] tabular-nums">
-                        {item.price !== null ? `$${item.price.toFixed(2)}` : '—'}
+                        {item.price != null && !isNaN(Number(item.price)) ? `$${Number(item.price).toFixed(2)}` : '—'}
                       </div>
                       <div
                         className={`text-[10px] font-mono font-semibold flex items-center justify-end gap-0.5 ${
                           isPos ? 'text-emerald-400' : 'text-rose-400'
                         }`}
                       >
-                        {item.change_percent !== null && (
+                        {item.change_percent != null && !isNaN(Number(item.change_percent)) ? (
                           <>
                             {isPos ? '+' : ''}
-                            {item.change_percent.toFixed(2)}%
+                            {Number(item.change_percent).toFixed(2)}%
                           </>
+                        ) : (
+                          <span className="text-[var(--text-muted)]">—</span>
                         )}
                       </div>
                     </div>
@@ -459,33 +476,67 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-between">
                 <div>
                   <div className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Polarity Score</div>
-                  <div className="text-lg font-extrabold text-emerald-400 font-mono">
-                    {sentiment.aggregate_score > 0 ? `+${sentiment.aggregate_score.toFixed(2)}` : sentiment.aggregate_score.toFixed(2)}
-                  </div>
+                  {(() => {
+                    const score = typeof sentiment.aggregate_score === 'number'
+                      ? sentiment.aggregate_score
+                      : typeof sentiment.average_sentiment_score === 'number'
+                      ? sentiment.average_sentiment_score
+                      : null;
+                    const scoreColor = score !== null && score > 0
+                      ? 'text-emerald-400'
+                      : score !== null && score < 0
+                      ? 'text-rose-400'
+                      : 'text-[var(--text-muted)]';
+                    const formattedScore = score !== null
+                      ? (score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2))
+                      : '—';
+                    return (
+                      <div className={`text-lg font-extrabold font-mono ${scoreColor}`}>
+                        {formattedScore}
+                      </div>
+                    );
+                  })()}
                 </div>
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                  {sentiment.classification}
-                </span>
+                {(() => {
+                  const score = typeof sentiment.aggregate_score === 'number'
+                    ? sentiment.aggregate_score
+                    : typeof sentiment.average_sentiment_score === 'number'
+                    ? sentiment.average_sentiment_score
+                    : null;
+                  const label = sentiment.classification || sentiment.sentiment_label || 'NEUTRAL';
+                  const isBull = label === 'BULLISH' || label === 'POSITIVE' || (score !== null && score > 0.15);
+                  const isBear = label === 'BEARISH' || label === 'NEGATIVE' || (score !== null && score < -0.15);
+                  const badgeColor = isBear
+                    ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                    : isBull
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                    : 'bg-[var(--bg-elevated)] border-[var(--border-subtle)] text-[var(--text-secondary)]';
+                  return (
+                    <span className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase tracking-wider ${badgeColor}`}>
+                      {label}
+                    </span>
+                  );
+                })()}
               </div>
 
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between text-[11px] text-[var(--text-secondary)]">
                   <span>Bullish Articles</span>
-                  <span className="font-mono text-emerald-400 font-bold">{sentiment.breakdown?.bullish || 0}</span>
+                  <span className="font-mono text-emerald-400 font-bold">{sentiment.breakdown?.bullish ?? sentiment.breakdown?.positive ?? 0}</span>
                 </div>
                 <div className="flex justify-between text-[11px] text-[var(--text-secondary)]">
                   <span>Neutral Articles</span>
-                  <span className="font-mono text-[var(--text-muted)] font-bold">{sentiment.breakdown?.neutral || 0}</span>
+                  <span className="font-mono text-[var(--text-muted)] font-bold">{sentiment.breakdown?.neutral ?? 0}</span>
                 </div>
                 <div className="flex justify-between text-[11px] text-[var(--text-secondary)]">
                   <span>Bearish Articles</span>
-                  <span className="font-mono text-rose-400 font-bold">{sentiment.breakdown?.bearish || 0}</span>
+                  <span className="font-mono text-rose-400 font-bold">{sentiment.breakdown?.bearish ?? sentiment.breakdown?.negative ?? 0}</span>
                 </div>
               </div>
 
               <div className="p-2.5 rounded-lg bg-[var(--bg-card)] text-[10px] text-[var(--text-muted)] flex items-start gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                <span>Computed via rule-based financial dictionary over {sentiment.sample_count} sampled articles.</span>
+                <span>Computed via rule-based financial dictionary over {sentiment.sample_count ?? sentiment.total_articles ?? sentiment.articles?.length ?? 0} sampled articles.</span>
               </div>
             </div>
           ) : (
@@ -523,7 +574,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                   {art.title}
                 </div>
                 <div className="flex items-center justify-between mt-1 text-[10px] text-[var(--text-muted)] font-mono">
-                  <span>{art.publisher}</span>
+                  <span>{art.publisher || art.source || 'Verified Source'}</span>
                   <span className="flex items-center gap-1 text-emerald-400">
                     Read <ExternalLink className="w-2.5 h-2.5" />
                   </span>

@@ -135,7 +135,8 @@ export const MarketsDiscoveryView: React.FC<MarketsDiscoveryViewProps> = ({
     setSyncMessage(null);
     try {
       const res = await triggerCatalogSync('sec_edgar');
-      setSyncMessage(`Successfully synchronized ${res.new_instruments_ingested.toLocaleString()} SEC EDGAR corporate equities!`);
+      const count = res?.new_instruments_ingested != null ? Number(res.new_instruments_ingested).toLocaleString() : '0';
+      setSyncMessage(`Successfully synchronized ${count} SEC EDGAR corporate equities!`);
       await loadStats();
       await loadPage(1, searchQuery, exchangeFilter, countryFilter, typeFilter);
     } catch (err: any) {
@@ -184,7 +185,7 @@ export const MarketsDiscoveryView: React.FC<MarketsDiscoveryViewProps> = ({
             <Database className="w-3.5 h-3.5 text-emerald-400" />
           </div>
           <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] font-mono mt-1">
-            {stats ? stats.total_instruments.toLocaleString() : '10,400+'}
+            {stats?.total_instruments != null ? Number(stats.total_instruments).toLocaleString() : '10,400+'}
           </div>
           <div className="text-[10px] text-emerald-400/80 font-mono mt-0.5">
             SEC EDGAR + Global Leaders
@@ -197,7 +198,7 @@ export const MarketsDiscoveryView: React.FC<MarketsDiscoveryViewProps> = ({
             <Globe2 className="w-3.5 h-3.5 text-cyan-400" />
           </div>
           <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] font-mono mt-1">
-            {stats ? stats.total_exchanges : 6}
+            {stats?.total_exchanges != null ? stats.total_exchanges : 6}
           </div>
           <div className="text-[10px] text-cyan-400/80 font-mono mt-0.5">
             US, UK, Japan, Swiss, EU
@@ -210,7 +211,7 @@ export const MarketsDiscoveryView: React.FC<MarketsDiscoveryViewProps> = ({
             <Building2 className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] font-mono mt-1">
-            {stats ? stats.primary_listings.toLocaleString() : '10,380+'}
+            {stats?.primary_listings != null ? Number(stats.primary_listings).toLocaleString() : '10,380+'}
           </div>
           <div className="text-[10px] text-amber-400/80 font-mono mt-0.5">
             Ordinary common shares
@@ -223,7 +224,7 @@ export const MarketsDiscoveryView: React.FC<MarketsDiscoveryViewProps> = ({
             <Layers className="w-3.5 h-3.5 text-purple-400" />
           </div>
           <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] font-mono mt-1">
-            {stats ? stats.adr_listings.toLocaleString() : '20+'}
+            {stats?.adr_listings != null ? Number(stats.adr_listings).toLocaleString() : '20+'}
           </div>
           <div className="text-[10px] text-purple-400/80 font-mono mt-0.5">
             American Depositary Receipts

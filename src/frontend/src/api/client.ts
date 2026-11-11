@@ -78,10 +78,111 @@ export async function simulateWhatIf(holdings: any[], scenario: any, baseCurrenc
   return res.json();
 }
 
-export async function fetchCompanySentiment(symbol: string): Promise<any> {
+export interface SentimentBreakdown {
+  positive: number;
+  neutral: number;
+  negative: number;
+  bullish: number;
+  bearish: number;
+}
+
+export interface SentimentArticle {
+  title: string;
+  source: string;
+  publisher: string;
+  url: string;
+  published_at?: string;
+  summary?: string;
+  sentiment_label: string;
+  provider?: string;
+}
+
+export interface CompanySentiment {
+  symbol: string;
+  total_articles: number;
+  sample_count: number;
+  average_sentiment_score: number | null;
+  aggregate_score: number | null;
+  sentiment_label: string;
+  classification: string;
+  breakdown: SentimentBreakdown;
+  articles: SentimentArticle[];
+}
+
+export async function fetchCompanySentiment(symbol: string): Promise<CompanySentiment> {
   const res = await fetch(`${BASE_URL}/news/sentiment?symbol=${encodeURIComponent(symbol)}`);
   if (!res.ok) throw new Error(`Sentiment error: ${res.statusText}`);
-  return res.json();
+  const raw = await res.json();
+
+  const avgScore =
+    typeof raw?.average_sentiment_score === 'number'
+      ? raw.average_sentiment_score
+      : typeof raw?.aggregate_score === 'number'
+      ? raw.aggregate_score
+      : null;
+
+  const total =
+    typeof raw?.total_articles === 'number'
+      ? raw.total_articles
+      : typeof raw?.sample_count === 'number'
+      ? raw.sample_count
+      : Array.isArray(raw?.articles)
+      ? raw.articles.length
+      : 0;
+
+  const label =
+    raw?.sentiment_label ||
+    raw?.classification ||
+    (avgScore !== null
+      ? avgScore > 0.15
+        ? 'BULLISH'
+        : avgScore < -0.15
+        ? 'BEARISH'
+        : 'NEUTRAL'
+      : 'NEUTRAL');
+
+  const articles: SentimentArticle[] = Array.isArray(raw?.articles)
+    ? raw.articles.map((a: any) => ({
+        title: a?.title || 'Untitled Headline',
+        source: a?.source || a?.publisher || 'Financial Media',
+        publisher: a?.publisher || a?.source || 'Financial Media',
+        url: a?.url || '',
+        published_at: a?.published_at,
+        summary: a?.summary || '',
+        sentiment_label: a?.sentiment_label || 'NEUTRAL',
+        provider: a?.provider || 'news_service',
+      }))
+    : [];
+
+  const rawBreakdown = raw?.breakdown;
+  const hasBreakdown = rawBreakdown && typeof rawBreakdown === 'object';
+  const positive = hasBreakdown
+    ? Number(rawBreakdown.positive ?? rawBreakdown.bullish ?? 0)
+    : articles.filter((a) => a.sentiment_label === 'POSITIVE' || a.sentiment_label === 'BULLISH').length;
+  const negative = hasBreakdown
+    ? Number(rawBreakdown.negative ?? rawBreakdown.bearish ?? 0)
+    : articles.filter((a) => a.sentiment_label === 'NEGATIVE' || a.sentiment_label === 'BEARISH').length;
+  const neutral = hasBreakdown
+    ? Number(rawBreakdown.neutral ?? 0)
+    : Math.max(0, total - positive - negative);
+
+  return {
+    symbol: (raw?.symbol || symbol).toUpperCase(),
+    total_articles: total,
+    sample_count: total,
+    average_sentiment_score: avgScore,
+    aggregate_score: avgScore,
+    sentiment_label: label,
+    classification: label,
+    breakdown: {
+      positive,
+      neutral,
+      negative,
+      bullish: positive,
+      bearish: negative,
+    },
+    articles,
+  };
 }
 
 export async function searchNews(query: string, limit: number = 10): Promise<any[]> {

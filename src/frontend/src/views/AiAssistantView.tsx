@@ -255,8 +255,12 @@ export const AiAssistantView: React.FC<{ onSelectSymbol?: (symbol: string) => vo
                                 <div className="space-y-1.5 text-xs">
                                   <div className="grid grid-cols-3 gap-2 text-[var(--text-secondary)]">
                                     <span className="text-[var(--text-muted)]">Price</span>
-                                    <span className="font-bold text-[var(--text-primary)]">${Number(qA.price || 0).toFixed(2)}</span>
-                                    <span className="font-bold text-[var(--text-primary)]">${Number(qB.price || 0).toFixed(2)}</span>
+                                    <span className="font-bold text-[var(--text-primary)]">
+                                      {qA.price != null && !isNaN(Number(qA.price)) ? `$${Number(qA.price).toFixed(2)}` : 'N/A'}
+                                    </span>
+                                    <span className="font-bold text-[var(--text-primary)]">
+                                      {qB.price != null && !isNaN(Number(qB.price)) ? `$${Number(qB.price).toFixed(2)}` : 'N/A'}
+                                    </span>
                                   </div>
                                   <div className="grid grid-cols-3 gap-2 text-[var(--text-secondary)]">
                                     <span className="text-[var(--text-muted)]">P/E Ratio</span>
@@ -287,7 +291,7 @@ export const AiAssistantView: React.FC<{ onSelectSymbol?: (symbol: string) => vo
                                 <div className="flex items-center justify-between text-xs font-bold text-purple-400">
                                   <span>HYPOTHETICAL REALLOCATION RECEIPT</span>
                                   <span className="text-[10px] text-[var(--text-muted)]">
-                                    NAV Delta: ${Number(wData.nav_change || 0).toFixed(2)}
+                                    NAV Delta: {wData.nav_change != null && !isNaN(Number(wData.nav_change)) ? `${Number(wData.nav_change) >= 0 ? '+' : '-'}$${Math.abs(Number(wData.nav_change)).toFixed(2)}` : 'N/A'}
                                   </span>
                                 </div>
 
@@ -295,25 +299,25 @@ export const AiAssistantView: React.FC<{ onSelectSymbol?: (symbol: string) => vo
                                   <div className="p-2 rounded bg-[var(--bg-card)]">
                                     <span className="text-[var(--text-muted)] block text-[10px]">BEFORE NAV</span>
                                     <span className="font-bold text-[var(--text-primary)]">
-                                      ${Number(wData.before_nav || 0).toFixed(2)}
+                                      {wData.before_nav != null && !isNaN(Number(wData.before_nav)) ? `$${Number(wData.before_nav).toFixed(2)}` : 'N/A'}
                                     </span>
                                   </div>
                                   <div className="p-2 rounded bg-[var(--bg-card)]">
                                     <span className="text-[var(--text-muted)] block text-[10px]">AFTER NAV</span>
                                     <span className="font-bold text-[var(--text-primary)]">
-                                      ${Number(wData.after_nav || 0).toFixed(2)}
+                                      {wData.after_nav != null && !isNaN(Number(wData.after_nav)) ? `$${Number(wData.after_nav).toFixed(2)}` : 'N/A'}
                                     </span>
                                   </div>
                                   <div className="p-2 rounded bg-[var(--bg-card)]">
                                     <span className="text-[var(--text-muted)] block text-[10px]">REMAINDER CASH</span>
                                     <span className="font-bold text-emerald-400">
-                                      ${Number(wData.after_cash || 0).toFixed(2)}
+                                      {wData.after_cash != null && !isNaN(Number(wData.after_cash)) ? `$${Number(wData.after_cash).toFixed(2)}` : 'N/A'}
                                     </span>
                                   </div>
                                   <div className="p-2 rounded bg-[var(--bg-card)]">
                                     <span className="text-[var(--text-muted)] block text-[10px]">HHI DELTA</span>
                                     <span className="font-bold text-cyan-400">
-                                      {wData.before_hhi?.toFixed(3)} ➔ {wData.after_hhi?.toFixed(3)}
+                                      {wData.before_hhi != null && !isNaN(Number(wData.before_hhi)) ? Number(wData.before_hhi).toFixed(3) : '—'} ➔ {wData.after_hhi != null && !isNaN(Number(wData.after_hhi)) ? Number(wData.after_hhi).toFixed(3) : '—'}
                                     </span>
                                   </div>
                                 </div>

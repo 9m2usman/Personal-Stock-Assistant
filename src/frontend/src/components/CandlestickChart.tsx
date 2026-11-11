@@ -444,10 +444,10 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({
             </div>
             <div className="flex items-baseline gap-2 mt-0.5">
               <span className="text-xl font-mono font-bold text-[var(--text-primary)] tabular-nums">
-                ${displayPrice?.toFixed(2)}
+                {displayPrice != null && !isNaN(Number(displayPrice)) ? `$${Number(displayPrice).toFixed(2)}` : '—'}
               </span>
               <span className={`text-xs font-mono font-semibold flex items-center ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {isUp ? '+' : ''}{displayChange?.toFixed(2)} ({isUp ? '+' : ''}{displayPct?.toFixed(2)}%)
+                {displayChange != null && !isNaN(Number(displayChange)) ? `${isUp ? '+' : ''}${Number(displayChange).toFixed(2)}` : '0.00'} ({displayPct != null && !isNaN(Number(displayPct)) ? `${isUp ? '+' : ''}${Number(displayPct).toFixed(2)}%` : '0.00%'})
               </span>
             </div>
           </div>
@@ -455,11 +455,11 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({
           {/* Hover Details Bar */}
           {hoverData && (
             <div className="hidden lg:flex items-center gap-3 text-[11px] font-mono text-[var(--text-secondary)] pl-4 border-l border-[var(--border-color)]">
-              <div><span className="text-[var(--text-muted)]">O:</span> ${hoverData.open?.toFixed(2)}</div>
-              <div><span className="text-[var(--text-muted)]">H:</span> ${hoverData.high?.toFixed(2)}</div>
-              <div><span className="text-[var(--text-muted)]">L:</span> ${hoverData.low?.toFixed(2)}</div>
-              <div><span className="text-[var(--text-muted)]">C:</span> ${hoverData.close?.toFixed(2)}</div>
-              {hoverData.volume ? <div><span className="text-[var(--text-muted)]">Vol:</span> {(hoverData.volume / 1000).toFixed(0)}k</div> : null}
+              <div><span className="text-[var(--text-muted)]">O:</span> {hoverData.open != null && !isNaN(Number(hoverData.open)) ? `$${Number(hoverData.open).toFixed(2)}` : '—'}</div>
+              <div><span className="text-[var(--text-muted)]">H:</span> {hoverData.high != null && !isNaN(Number(hoverData.high)) ? `$${Number(hoverData.high).toFixed(2)}` : '—'}</div>
+              <div><span className="text-[var(--text-muted)]">L:</span> {hoverData.low != null && !isNaN(Number(hoverData.low)) ? `$${Number(hoverData.low).toFixed(2)}` : '—'}</div>
+              <div><span className="text-[var(--text-muted)]">C:</span> {hoverData.close != null && !isNaN(Number(hoverData.close)) ? `$${Number(hoverData.close).toFixed(2)}` : '—'}</div>
+              {hoverData.volume != null && !isNaN(Number(hoverData.volume)) ? <div><span className="text-[var(--text-muted)]">Vol:</span> {(Number(hoverData.volume) / 1000).toFixed(0)}k</div> : null}
               <div className="text-[var(--text-muted)]">({hoverData.time})</div>
             </div>
           )}
