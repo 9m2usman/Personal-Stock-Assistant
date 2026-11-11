@@ -1,22 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  MessageSquare,
+  LayoutDashboard,
+  Globe2,
   Building2,
-  Activity,
-  PieChart,
-  Sliders,
-  Newspaper,
-  Cpu,
-  Code2,
-  Zap,
-  CheckCircle2,
-  Search,
   Star,
+  PieChart,
+  BarChart3,
+  Newspaper,
+  Bot,
+  FlaskConical,
+  Bookmark,
+  Settings,
+  Zap,
+  Search,
+  Sun,
+  Moon,
+  ChevronLeft,
   ChevronRight,
-  Globe,
-  Radio
+  Menu,
+  X,
+  Bell,
+  Cpu,
+  User,
+  ShieldCheck,
+  CheckCircle2,
+  Sliders,
+  ExternalLink
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext.tsx';
 import { searchInstruments, NormalizedInstrument, fetchWorkerHealth } from '../api/client.ts';
+import { CommandPalette } from './CommandPalette.tsx';
+import { AuthModal } from './AuthModal.tsx';
+import { OnboardingWizard } from './OnboardingWizard.tsx';
 import { WatchlistDrawer } from './WatchlistDrawer.tsx';
 
 interface AppShellProps {
@@ -34,30 +49,49 @@ export const AppShell: React.FC<AppShellProps> = ({
   onSelectSymbol,
   children,
 }) => {
+  const { theme, toggleTheme } = useTheme();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [watchlistDrawerOpen, setWatchlistDrawerOpen] = useState(false);
+
+  // Search in Header
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NormalizedInstrument[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
-  const [workerHealth, setWorkerHealth] = useState<any>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const quickTickers = ['NVDA', 'AAPL', 'MSFT', 'TSLA', 'AMZN', 'HSBA.L'];
+  // User Profile
+  const [user, setUser] = useState<{ name: string; email: string; tier: string } | null>(() => {
+    try {
+      const saved = localStorage.getItem('inkvector_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
-  const navItems = [
-    { id: 'chat', label: 'AI Assistant', icon: MessageSquare },
-    { id: 'research', label: 'Stock Research', icon: Building2 },
-    { id: 'technical', label: 'Technical Studio', icon: Activity },
-    { id: 'portfolio', label: 'Portfolio & Excel', icon: PieChart },
-    { id: 'scenarios', label: 'What-If Scenarios', icon: Sliders },
-    { id: 'news', label: 'News & Sentiment', icon: Newspaper },
-    { id: 'jobs', label: 'Task Workers', icon: Cpu },
-  ];
+  // Background Worker Health
+  const [workerHealth, setWorkerHealth] = useState<any>(null);
 
   useEffect(() => {
-    // Check background health once on mount
     fetchWorkerHealth()
       .then((h) => setWorkerHealth(h))
       .catch(() => setWorkerHealth(null));
+  }, []);
+
+  // Check if first-time user
+  useEffect(() => {
+    try {
+      const onboarded = localStorage.getItem('inkvector_onboarded');
+      if (!onboarded) {
+        setOnboardingOpen(true);
+      }
+    } catch {
+      // storage
+    }
   }, []);
 
   // Close search dropdown on click outside
@@ -79,11 +113,11 @@ export const AppShell: React.FC<AppShellProps> = ({
       return;
     }
     try {
-      const results = await searchInstruments(val.trim(), undefined, 8);
-      setSearchResults(results);
+      const res = await searchInstruments(val.trim(), undefined, 6);
+      setSearchResults(res);
       setSearchOpen(true);
-    } catch (e) {
-      console.error(e);
+    } catch {
+      setSearchResults([]);
     }
   };
 
@@ -92,104 +126,275 @@ export const AppShell: React.FC<AppShellProps> = ({
     setSearchQuery('');
     setSearchResults([]);
     setSearchOpen(false);
+    setActiveTab('stock_detail');
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchResults.length > 0) {
-      handleSelectInstrument(searchResults[0].display_symbol);
-    } else if (searchQuery.trim()) {
-      handleSelectInstrument(searchQuery.trim().toUpperCase());
+  const navSections = [
+    {
+      title: 'WORKSPACE',
+      items: [
+        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+        { id: 'markets', label: 'Markets Discovery', icon: Globe2 },
+        { id: 'stock_detail', label: 'Stock Detail Studio', icon: Building2 },
+        { id: 'watchlists', label: 'Watchlists', icon: Star },
+        { id: 'portfolio', label: 'Portfolio & Excel', icon: PieChart },
+        { id: 'research', label: 'Research & Peers', icon: BarChart3 },
+        { id: 'news', label: 'News & Sentiment', icon: Newspaper },
+      ],
+    },
+    {
+      title: 'INTELLIGENCE',
+      items: [
+        { id: 'assistant', label: 'AI Assistant', icon: Bot },
+        { id: 'analysis_lab', label: 'Analysis Lab', icon: FlaskConical },
+        { id: 'saved', label: 'Saved Research', icon: Bookmark },
+      ],
+    },
+    {
+      title: 'PREFERENCES',
+      items: [
+        { id: 'settings', label: 'Settings', icon: Settings },
+      ],
+    },
+  ];
+
+  const getPageTitle = (tab: string) => {
+    for (const sec of navSections) {
+      for (const item of sec.items) {
+        if (item.id === tab) return item.label;
+      }
     }
+    return 'Workspace';
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      {/* Sidebar Navigation */}
-      <aside className="w-64 bg-slate-900/95 border-r border-slate-800 flex flex-col shrink-0">
+    <div className="flex h-screen bg-[var(--bg-main)] text-[var(--text-primary)] overflow-hidden font-sans">
+      {/* 1. Persistent Left Sidebar */}
+      <aside
+        className={`${
+          collapsed ? 'w-20' : 'w-64'
+        } bg-[var(--bg-secondary)] border-r border-[var(--border-color)] flex flex-col shrink-0 transition-all duration-300 z-30 hidden md:flex`}
+      >
         {/* Brand Header */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/10">
+        <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className="flex items-center gap-3 text-left group"
+          >
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition">
               <Zap className="w-4 h-4 fill-current" />
             </div>
-            <div>
-              <div className="text-sm font-extrabold tracking-tight text-slate-100">INKVECTOR</div>
-              <div className="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase">
-                Stock Assistant
+            {!collapsed && (
+              <div>
+                <div className="text-sm font-extrabold tracking-tight text-[var(--text-primary)]">
+                  INKVECTOR
+                </div>
+                <div className="text-[9px] text-emerald-400 font-mono font-bold tracking-wider uppercase">
+                  Institutional AI
+                </div>
               </div>
-            </div>
-          </div>
-          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
-            v0.1.0
-          </span>
+            )}
+          </button>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
-                  isActive
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`} />
-                  <span>{item.label}</span>
+        {/* Navigation Section Groups */}
+        <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
+          {navSections.map((section, sidx) => (
+            <div key={sidx} className="space-y-1">
+              {!collapsed && (
+                <div className="px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                  {section.title}
                 </div>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />}
-              </button>
-            );
-          })}
+              )}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    title={collapsed ? item.label : undefined}
+                    className={`w-full flex items-center ${
+                      collapsed ? 'justify-center px-0' : 'justify-between px-3'
+                    } py-2.5 rounded-xl text-xs font-semibold transition ${
+                      isActive
+                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-[var(--text-muted)]'}`} />
+                      {!collapsed && <span>{item.label}</span>}
+                    </div>
+                    {!collapsed && isActive && (
+                      <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-        {/* Active Instrument Widget in Sidebar */}
-        <div className="p-3 mx-3 mb-3 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-1">
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Active Instrument</div>
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-sm font-extrabold text-emerald-400">{selectedSymbol}</span>
+        {/* Active Instrument Widget */}
+        {!collapsed && (
+          <div className="mx-3 mb-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] flex items-center justify-between">
+            <div>
+              <div className="text-[9px] font-mono font-bold uppercase text-[var(--text-muted)]">Active Focus</div>
+              <button
+                onClick={() => setActiveTab('stock_detail')}
+                className="font-mono text-sm font-extrabold text-emerald-400 hover:underline"
+              >
+                {selectedSymbol}
+              </button>
+            </div>
             <button
-              onClick={() => setIsWatchlistOpen(true)}
-              className="text-[10px] text-slate-400 hover:text-emerald-400 font-medium underline transition"
+              onClick={() => setWatchlistDrawerOpen(true)}
+              className="text-[10px] text-[var(--text-secondary)] hover:text-emerald-400 font-semibold"
             >
-              Change
+              Watchlist →
             </button>
           </div>
-        </div>
+        )}
 
-        {/* Footer Info & Repository */}
-        <div className="p-4 border-t border-slate-800/80 space-y-2 text-xs">
-          <a
-            href="https://github.com/9m2usman/Personal-Stock-Assistant"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 text-slate-400 hover:text-slate-200 transition"
-          >
-            <Code2 className="w-4 h-4" />
-            <span>GitHub Repository</span>
-          </a>
-          <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>6 Providers Online</span>
-          </div>
+        {/* Sidebar Footer: Profile, Theme, Collapse */}
+        <div className="p-3 border-t border-[var(--border-color)] bg-[var(--bg-card)] space-y-2">
+          {!collapsed ? (
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setAuthModalOpen(true)}
+                className="flex items-center gap-2 text-left truncate group"
+              >
+                <div className="w-7 h-7 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] flex items-center justify-center text-emerald-400 shrink-0">
+                  <User className="w-3.5 h-3.5" />
+                </div>
+                <div className="truncate">
+                  <div className="text-xs font-bold text-[var(--text-primary)] truncate">
+                    {user?.name || 'Terminal Analyst'}
+                  </div>
+                  <div className="text-[10px] text-emerald-400 font-mono">
+                    {user?.tier || 'Institutional Tier'}
+                  </div>
+                </div>
+              </button>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={toggleTheme}
+                  className="p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+                  title="Toggle Dark/Light Mode"
+                >
+                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-emerald-600" />}
+                </button>
+                <button
+                  onClick={() => setCollapsed(true)}
+                  className="p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+                  title="Collapse Sidebar"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-emerald-600" />}
+              </button>
+              <button
+                onClick={() => setCollapsed(false)}
+                className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+                title="Expand Sidebar"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Mobile Drawer */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-72 bg-[var(--bg-secondary)] h-full p-4 flex flex-col justify-between border-r border-[var(--border-color)]">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-color)]">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <Zap className="w-4 h-4 fill-current" />
+                  </div>
+                  <span className="font-extrabold text-sm text-[var(--text-primary)]">INKVECTOR</span>
+                </div>
+                <button onClick={() => setMobileDrawerOpen(false)}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {navSections.map((sec, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="text-[10px] font-mono font-bold uppercase text-[var(--text-muted)] px-2">
+                      {sec.title}
+                    </div>
+                    {sec.items.map((it) => (
+                      <button
+                        key={it.id}
+                        onClick={() => {
+                          setActiveTab(it.id);
+                          setMobileDrawerOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold ${
+                          activeTab === it.id
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-card)]'
+                        }`}
+                      >
+                        <it.icon className="w-4 h-4" />
+                        <span>{it.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
+              <span className="text-xs text-[var(--text-secondary)] font-mono">{user?.name || 'Analyst'}</span>
+              <button onClick={toggleTheme} className="p-2 rounded-lg bg-[var(--bg-card)]">
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main App Layout */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header Bar */}
-        <header className="h-14 bg-slate-900/80 border-b border-slate-800 px-6 flex items-center justify-between gap-4 shrink-0 backdrop-blur-md z-20">
-          {/* Universal Search Autocomplete */}
-          <div ref={searchContainerRef} className="relative w-80 max-w-sm">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+        {/* Top Header */}
+        <header className="h-16 bg-[var(--bg-secondary)]/90 backdrop-blur-md border-b border-[var(--border-color)] px-4 sm:px-6 flex items-center justify-between gap-4 shrink-0 z-20">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="md:hidden p-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-muted)]"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+
+            {/* Breadcrumb / Title */}
+            <div>
+              <div className="text-[10px] font-mono uppercase text-[var(--text-muted)]">INKVECTOR Terminal</div>
+              <h2 className="text-sm font-extrabold text-[var(--text-primary)]">
+                {getPageTitle(activeTab)}
+              </h2>
+            </div>
+          </div>
+
+          {/* Global Search Input Autocomplete */}
+          <div ref={searchContainerRef} className="relative w-72 sm:w-80 hidden md:block">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[var(--text-muted)]" />
               <input
                 type="text"
                 value={searchQuery}
@@ -197,117 +402,120 @@ export const AppShell: React.FC<AppShellProps> = ({
                   if (searchQuery.trim()) setSearchOpen(true);
                 }}
                 onChange={(e) => handleSearchChange(e.target.value.toUpperCase())}
-                placeholder="Search global stocks (e.g. Apple, NVDA, HSBA.L)..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition font-mono"
+                placeholder="Search stocks (NVDA, Apple, HSBA.L)..."
+                className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl pl-8 pr-16 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 font-mono transition"
               />
-            </form>
+              <button
+                onClick={() => setCommandPaletteOpen(true)}
+                className="absolute right-2 top-1.5 px-1.5 py-0.5 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[10px] font-mono text-[var(--text-muted)] hover:text-emerald-400 transition"
+              >
+                Ctrl+K
+              </button>
+            </div>
 
-            {/* Dropdown Live Results */}
             {searchOpen && searchResults.length > 0 && (
-              <div className="absolute top-10 left-0 right-0 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-slate-800/60 max-h-80 overflow-y-auto">
-                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-500 bg-slate-950/80">
-                  Global Instruments Matches
-                </div>
+              <div className="absolute top-10 left-0 right-0 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-2xl p-2 z-50 space-y-1">
                 {searchResults.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleSelectInstrument(item.display_symbol)}
-                    className="w-full p-2.5 text-left flex items-center justify-between hover:bg-slate-800/60 transition"
+                    className="w-full p-2 text-left flex items-center justify-between hover:bg-[var(--bg-elevated)] rounded-xl transition text-xs"
                   >
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-extrabold text-xs text-emerald-400">
-                          {item.display_symbol}
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-medium">
+                        <span className="font-mono font-bold text-emerald-400">{item.display_symbol}</span>
+                        <span className="text-[9px] px-1 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">
                           {item.exchange_name}
                         </span>
                         {item.is_adr && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-950 text-amber-400 border border-amber-800/40">
+                          <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-400 font-mono">
                             ADR
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-300 truncate max-w-[200px]">
+                      <div className="text-[11px] text-[var(--text-secondary)] truncate max-w-[200px]">
                         {item.company_name}
                       </div>
-                      <div className="text-[9px] text-slate-500 font-mono">
-                        {item.country} · {item.currency}
-                      </div>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400">Select →</span>
+                    <span className="text-[10px] text-emerald-400 font-mono">Select →</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Quick-Switch Ticker Bar */}
-          <div className="hidden xl:flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-mono">
-            <span className="text-[10px] uppercase font-bold text-slate-500 px-2">Quick:</span>
-            {quickTickers.map((sym) => (
-              <button
-                key={sym}
-                onClick={() => onSelectSymbol(sym)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
-                  selectedSymbol === sym
-                    ? 'bg-emerald-500 text-slate-950 shadow'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                }`}
-              >
-                {sym}
-              </button>
-            ))}
-          </div>
-
-          {/* Right Header Status Controls */}
-          <div className="flex items-center gap-3">
-            {/* Watchlist Toggle Button */}
+          {/* Header Controls: Palette, Notifications, Theme, Watchlist */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsWatchlistOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-950 hover:bg-slate-800/80 border border-slate-800 text-slate-200 text-xs font-bold rounded-lg transition"
+              onClick={() => setCommandPaletteOpen(true)}
+              className="p-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] hover:border-emerald-500 text-[var(--text-muted)] hover:text-emerald-400 transition"
+              title="Command Palette (Ctrl+K)"
             >
-              <Star className="w-3.5 h-3.5 text-amber-400 fill-current" />
-              <span>Watchlist</span>
+              <Search className="w-4 h-4" />
             </button>
 
-            {/* Live Operational Status Badge */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>FastAPI Engine</span>
-            </div>
+            <button
+              onClick={() => setWatchlistDrawerOpen(true)}
+              className="p-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] hover:border-emerald-500 text-[var(--text-muted)] hover:text-emerald-400 transition"
+              title="Quick Watchlist Drawer"
+            >
+              <Star className="w-4 h-4" />
+            </button>
 
-            {/* Background Workers Indicator */}
-            {workerHealth && (
-              <div
-                title={`Broker: ${workerHealth.redis_connection} (Eager: ${workerHealth.task_always_eager})`}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-                  workerHealth.redis_connection === 'CONNECTED'
-                    ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/40'
-                    : 'bg-slate-900 text-slate-400 border-slate-800'
-                }`}
-              >
-                <Radio className="w-3 h-3" />
-                <span>Workers: {workerHealth.redis_connection === 'CONNECTED' ? 'Live' : 'Eager'}</span>
-              </div>
-            )}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] hover:border-emerald-500 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+              title="Toggle Theme"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-emerald-600" />}
+            </button>
+
+            <button
+              onClick={() => setAuthModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-semibold transition"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{user?.name ? 'Terminal Active' : 'Sign In'}</span>
+            </button>
           </div>
         </header>
 
-        {/* View Container */}
-        <main className="flex-1 overflow-y-auto bg-slate-950">
+        {/* Content Container */}
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
 
-      {/* Slide-out Watchlist Drawer */}
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onNavigate={(tab) => setActiveTab(tab)}
+        onSelectSymbol={(sym) => onSelectSymbol(sym)}
+      />
+
+      {/* Global Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={(u) => setUser(u)}
+      />
+
+      {/* First-Time Onboarding Wizard */}
+      <OnboardingWizard
+        isOpen={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
+        onComplete={() => setActiveTab('overview')}
+      />
+
+      {/* Watchlist Quick Drawer */}
       <WatchlistDrawer
-        isOpen={isWatchlistOpen}
-        onClose={() => setIsWatchlistOpen(false)}
+        isOpen={watchlistDrawerOpen}
+        onClose={() => setWatchlistDrawerOpen(false)}
         selectedSymbol={selectedSymbol}
         onSelectSymbol={(sym) => {
           onSelectSymbol(sym);
-          setIsWatchlistOpen(false);
+          setActiveTab('stock_detail');
         }}
       />
     </div>

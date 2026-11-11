@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
+import { ThemeProvider } from './context/ThemeContext.tsx';
 import { AppShell } from './components/AppShell.tsx';
-import { ChatWorkspace } from './views/ChatWorkspace.tsx';
-import { MarketResearch } from './views/MarketResearch.tsx';
-import { TechnicalStudio } from './views/TechnicalStudio.tsx';
-import { PortfolioDashboard } from './views/PortfolioDashboard.tsx';
-import { ScenarioLab } from './views/ScenarioLab.tsx';
-import { NewsTerminal } from './views/NewsTerminal.tsx';
-import { JobsMonitor } from './views/JobsMonitor.tsx';
+import { OverviewDashboard } from './views/OverviewDashboard.tsx';
+import { MarketsDiscoveryView } from './views/MarketsDiscoveryView.tsx';
+import { StockDetailWorkspace } from './views/StockDetailWorkspace.tsx';
+import { WatchlistsWorkspace } from './views/WatchlistsWorkspace.tsx';
+import { PortfolioWorkspace } from './views/PortfolioWorkspace.tsx';
+import { ResearchWorkspace } from './views/ResearchWorkspace.tsx';
+import { NewsSentimentView } from './views/NewsSentimentView.tsx';
+import { AiAssistantView } from './views/AiAssistantView.tsx';
+import { AnalysisLabView } from './views/AnalysisLabView.tsx';
+import { SavedResearchView } from './views/SavedResearchView.tsx';
+import { SettingsView } from './views/SettingsView.tsx';
 
-export function App() {
-  const [activeTab, setActiveTab] = useState('chat');
+export function AppContent() {
+  const [activeTab, setActiveTab] = useState('overview');
   const [selectedSymbol, setSelectedSymbol] = useState('NVDA');
 
   const handleSelectSymbol = (sym: string, targetTab?: string) => {
@@ -26,14 +31,87 @@ export function App() {
       selectedSymbol={selectedSymbol}
       onSelectSymbol={(sym) => handleSelectSymbol(sym)}
     >
-      {activeTab === 'chat' && <ChatWorkspace onSelectSymbol={(sym) => handleSelectSymbol(sym, 'technical')} />}
-      {activeTab === 'research' && <MarketResearch initialSymbol={selectedSymbol} onSelectSymbol={(sym) => handleSelectSymbol(sym)} />}
-      {activeTab === 'technical' && <TechnicalStudio initialSymbol={selectedSymbol} onSelectSymbol={(sym) => handleSelectSymbol(sym)} />}
-      {activeTab === 'portfolio' && <PortfolioDashboard />}
-      {activeTab === 'scenarios' && <ScenarioLab />}
-      {activeTab === 'news' && <NewsTerminal initialSymbol={selectedSymbol} />}
-      {activeTab === 'jobs' && <JobsMonitor initialSymbol={selectedSymbol} />}
+      {activeTab === 'overview' && (
+        <OverviewDashboard
+          selectedSymbol={selectedSymbol}
+          onNavigate={(tab) => setActiveTab(tab)}
+          onSelectSymbol={(sym) => handleSelectSymbol(sym)}
+        />
+      )}
+
+      {activeTab === 'markets' && (
+        <MarketsDiscoveryView
+          onNavigate={(tab) => setActiveTab(tab)}
+          onSelectSymbol={(sym) => handleSelectSymbol(sym, 'stock_detail')}
+        />
+      )}
+
+      {activeTab === 'stock_detail' && (
+        <StockDetailWorkspace
+          symbol={selectedSymbol}
+          onSelectSymbol={(sym) => handleSelectSymbol(sym)}
+          onNavigateToAssistant={() => setActiveTab('assistant')}
+        />
+      )}
+
+      {activeTab === 'watchlists' && (
+        <WatchlistsWorkspace
+          onSelectSymbol={(sym) => handleSelectSymbol(sym, 'stock_detail')}
+          onNavigate={(tab) => setActiveTab(tab)}
+        />
+      )}
+
+      {activeTab === 'portfolio' && (
+        <PortfolioWorkspace
+          onNavigateToAssistant={() => setActiveTab('assistant')}
+        />
+      )}
+
+      {activeTab === 'research' && (
+        <ResearchWorkspace
+          onSelectSymbol={(sym) => handleSelectSymbol(sym, 'stock_detail')}
+          onNavigate={(tab) => setActiveTab(tab)}
+        />
+      )}
+
+      {activeTab === 'news' && (
+        <NewsSentimentView
+          initialSymbol={selectedSymbol}
+          onSelectSymbol={(sym) => handleSelectSymbol(sym)}
+        />
+      )}
+
+      {activeTab === 'assistant' && (
+        <AiAssistantView
+          onSelectSymbol={(sym) => handleSelectSymbol(sym)}
+        />
+      )}
+
+      {activeTab === 'analysis_lab' && (
+        <AnalysisLabView
+          initialSymbol={selectedSymbol}
+        />
+      )}
+
+      {activeTab === 'saved' && (
+        <SavedResearchView
+          onSelectSymbol={(sym) => handleSelectSymbol(sym, 'stock_detail')}
+          onNavigate={(tab) => setActiveTab(tab)}
+        />
+      )}
+
+      {activeTab === 'settings' && (
+        <SettingsView />
+      )}
     </AppShell>
+  );
+}
+
+export function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 

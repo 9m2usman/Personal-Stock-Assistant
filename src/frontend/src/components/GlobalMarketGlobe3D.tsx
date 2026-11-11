@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Globe, Activity, Eye, Zap } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext.tsx';
 
 interface Hub {
   name: string;
@@ -33,6 +34,7 @@ export const GlobalMarketGlobe3D: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [webGLSupported, setWebGLSupported] = useState(true);
   const [activeHub, setActiveHub] = useState<Hub>(HUBS[0]);
+  const { theme } = useTheme();
 
   useEffect(() => {
     // Check reduced motion
@@ -85,10 +87,10 @@ export const GlobalMarketGlobe3D: React.FC = () => {
     const globeRadius = 70;
     const sphereGeo = new THREE.SphereGeometry(globeRadius, 24, 24);
     const sphereMat = new THREE.PointsMaterial({
-      color: 0x10b981,
+      color: theme === 'dark' ? 0x10b981 : 0x078c69,
       size: 1.5,
       transparent: true,
-      opacity: 0.5,
+      opacity: theme === 'dark' ? 0.5 : 0.65,
     });
     const globePoints = new THREE.Points(sphereGeo, sphereMat);
     globeGroup.add(globePoints);
@@ -96,7 +98,7 @@ export const GlobalMarketGlobe3D: React.FC = () => {
     // 2. Subtle wireframe inner sphere
     const wireGeo = new THREE.WireframeGeometry(new THREE.SphereGeometry(globeRadius - 0.5, 12, 12));
     const wireMat = new THREE.LineBasicMaterial({
-      color: 0x064e3b,
+      color: theme === 'dark' ? 0x064e3b : 0xa7f3d0,
       transparent: true,
       opacity: 0.25,
     });
@@ -214,21 +216,21 @@ export const GlobalMarketGlobe3D: React.FC = () => {
       wireGeo.dispose();
       wireMat.dispose();
     };
-  }, []);
+  }, [theme]);
 
   if (!webGLSupported) {
     return (
-      <div className="flex flex-col items-center justify-center h-56 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-center space-y-2">
+      <div className="flex flex-col items-center justify-center h-56 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-color)] p-6 text-center space-y-2">
         <Globe className="w-8 h-8 text-emerald-400" />
-        <div className="text-xs font-bold text-slate-200">Global Financial Hub Network</div>
+        <div className="text-xs font-bold text-[var(--text-primary)]">Global Financial Hub Network</div>
         <div className="flex flex-wrap justify-center gap-1.5 pt-2">
           {HUBS.map((h) => (
             <span
               key={h.mic}
               className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
                 h.status === 'OPEN'
-                  ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'
-                  : 'bg-slate-800 text-slate-400'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] border border-[var(--border-subtle)]'
               }`}
             >
               {h.mic}: {h.status}
@@ -240,7 +242,7 @@ export const GlobalMarketGlobe3D: React.FC = () => {
   }
 
   return (
-    <div className="relative bg-slate-900/60 border border-slate-800 rounded-2xl p-4 shadow-xl overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4">
+    <div className="relative bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 shadow-xl overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4">
       {/* Left Info Text */}
       <div className="space-y-2 max-w-sm z-10">
         <div className="flex items-center gap-2">
@@ -249,18 +251,18 @@ export const GlobalMarketGlobe3D: React.FC = () => {
             Real-Time 3D Exchange Telemetry
           </span>
         </div>
-        <h3 className="text-lg font-extrabold text-slate-100">Global Market Synchronizer</h3>
-        <p className="text-xs text-slate-400 leading-relaxed">
+        <h3 className="text-lg font-extrabold text-[var(--text-primary)]">Global Market Synchronizer</h3>
+        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
           Autonomous multi-exchange financial data routing across primary global settlement centers.
           Drag the 3D globe to inspect active capital liquidity channels.
         </p>
 
         {/* Active Hub Pill */}
         <div className="pt-1 flex items-center gap-2">
-          <div className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] font-mono flex items-center gap-2">
-            <span className="text-slate-400">Center:</span>
-            <span className="font-bold text-slate-100">{activeHub.name}</span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${activeHub.status === 'OPEN' ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-400'}`}>
+          <div className="px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[11px] font-mono flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">Center:</span>
+            <span className="font-bold text-[var(--text-primary)]">{activeHub.name}</span>
+            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${activeHub.status === 'OPEN' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'}`}>
               {activeHub.status}
             </span>
           </div>
@@ -272,7 +274,7 @@ export const GlobalMarketGlobe3D: React.FC = () => {
         ref={containerRef}
         className="w-full md:w-80 h-56 cursor-grab active:cursor-grabbing flex items-center justify-center relative select-none"
       >
-        <div className="absolute bottom-1 right-2 text-[9px] text-slate-500 font-mono pointer-events-none">
+        <div className="absolute bottom-1 right-2 text-[9px] text-[var(--text-muted)] font-mono pointer-events-none">
           Three.js WebGL · 3D Market Mesh
         </div>
       </div>

@@ -84,6 +84,12 @@ export async function fetchCompanySentiment(symbol: string): Promise<any> {
   return res.json();
 }
 
+export async function searchNews(query: string, limit: number = 10): Promise<any[]> {
+  const res = await fetch(`${BASE_URL}/news/search?query=${encodeURIComponent(query)}&limit=${limit}`);
+  if (!res.ok) throw new Error(`News search error: ${res.statusText}`);
+  return res.json();
+}
+
 export async function executePythonSandbox(code: string, timeoutSeconds: number = 5): Promise<any> {
   const res = await fetch(`${BASE_URL}/sandbox/execute`, {
     method: 'POST',

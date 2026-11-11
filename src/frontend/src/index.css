@@ -1,8 +1,52 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-main: #0B1016;
+    --bg-secondary: #111922;
+    --bg-elevated: #17212C;
+    --bg-card: #151F29;
+    --text-primary: #F0F4F8;
+    --text-secondary: #96A4B3;
+    --text-muted: #687789;
+    --border-color: #263442;
+    --border-subtle: #1C2733;
+    --accent-primary: #20C997;
+    --accent-hover: #1DB889;
+    --color-positive: #22C98A;
+    --color-negative: #F06B73;
+    --color-warning: #E9B85C;
+    --color-info: #69A8F5;
+  }
+
+  .light {
+    --bg-main: #F4F7FA;
+    --bg-secondary: #FFFFFF;
+    --bg-elevated: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --text-primary: #182330;
+    --text-secondary: #617184;
+    --text-muted: #8997A7;
+    --border-color: #E1E8EF;
+    --border-subtle: #EDF2F7;
+    --accent-primary: #078C69;
+    --accent-hover: #067356;
+    --color-positive: #078C69;
+    --color-negative: #D94D5C;
+    --color-warning: #A97822;
+    --color-info: #3978C6;
+  }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    overflow-x: hidden;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -13,14 +57,54 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: var(--bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--border-color);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--text-muted);
+}
+
+/* Animations and transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
