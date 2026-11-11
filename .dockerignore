@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Environment & Secrets
+.env
+.env.*
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.db
+*.sqlite
+*.sqlite3
+
+# Node & Build Outputs
+node_modules/
+dist/
+build/
+npm-debug.log*
+
+# Documentation & Research
+docs/
+research/
