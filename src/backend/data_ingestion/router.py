@@ -3,6 +3,8 @@ Multi-Provider Financial Data Router
 Orchestrates primary and fallback provider routing across asset classes.
 """
 from typing import List, Optional
+from datetime import datetime, timezone
+from decimal import Decimal
 from src.backend.data_ingestion.base import (
     NormalizedBar,
     NormalizedQuote,
@@ -43,6 +45,48 @@ class FinancialDataRouter:
             "NESN": "NSRGY",       # Nestlé SIX -> US OTC ADR
             "NESN.SW": "NSRGY",
         }
+
+    async def get_quote(self, symbol: str) -> NormalizedQuote:
+        """Retrieves real-time quote with ADR resolution and failover."""
+        norm_sym = self.adr_proxies.get(symbol.upper(), symbol)
+        if norm_sym.endswith(".LON"):
+            bars = await self.alpha_vantage.get_daily_history(norm_sym, limit=1)
+            if not bars:
+                raise InstrumentNotFoundError(symbol, "Alpha Vantage", "No quote data returned")
+            latest = bars[0]
+            change = latest.close - latest.open
+            pct_change = round((change / latest.open) * Decimal("100"), 2) if latest.open else Decimal("0")
+            return NormalizedQuote(
+                symbol=norm_sym,
+                price=latest.close,
+                change=change,
+                change_percent=pct_change,
+                currency=latest.currency,
+                exchange="LSE",
+                as_of=datetime.now(timezone.utc),
+                provider="alpha_vantage"
+            )
+
+        try:
+            return await self.twelve_data.get_quote(norm_sym)
+        except Exception as e:
+            logger.warning("Twelve Data quote failed for %s: %s. Trying FMP fallback...", norm_sym, e)
+            bars = await self.fmp.get_daily_history(norm_sym, limit=1)
+            if not bars:
+                raise InstrumentNotFoundError(symbol, "FMP", f"No quote data available: {e}")
+            latest = bars[0]
+            change = latest.close - latest.open
+            pct_change = round((change / latest.open) * Decimal("100"), 2) if latest.open else Decimal("0")
+            return NormalizedQuote(
+                symbol=norm_sym,
+                price=latest.close,
+                change=change,
+                change_percent=pct_change,
+                currency=latest.currency,
+                exchange="US",
+                as_of=datetime.now(timezone.utc),
+                provider="fmp"
+            )
 
     async def get_daily_history(
         self,
@@ -97,5 +141,6 @@ class FinancialDataRouter:
         """Retrieves ECB exchange rates."""
         return await self.fx.get_rate(base_currency, target_currency)
 
-# Singleton router instance
+# Singleton router instances
 router = FinancialDataRouter()
+financial_router = router
