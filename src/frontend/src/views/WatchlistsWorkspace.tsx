@@ -13,6 +13,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { fetchWatchlist, searchInstruments, WatchlistItem, NormalizedInstrument } from '../api/client.ts';
+import { formatCurrency, formatPercent } from '../utils/financial.ts';
 
 interface WatchlistsWorkspaceProps {
   onSelectSymbol: (symbol: string) => void;
@@ -247,16 +248,12 @@ export const WatchlistsWorkspace: React.FC<WatchlistsWorkspaceProps> = ({
                     </td>
 
                     <td className="py-3 text-right font-bold text-[var(--text-primary)]">
-                      {item.price !== null && item.price !== undefined
-                        ? `$${item.price.toFixed(2)}`
-                        : '—'}
+                      {formatCurrency(item.price, 2)}
                     </td>
 
                     <td className="py-3 text-right font-bold">
                       <span className={isPos ? 'text-emerald-400' : 'text-rose-400'}>
-                        {item.change_percent !== null && item.change_percent !== undefined
-                          ? `${isPos ? '+' : ''}${item.change_percent.toFixed(2)}%`
-                          : '—'}
+                        {formatPercent(item.change_percent, 2, true)}
                       </span>
                     </td>
 

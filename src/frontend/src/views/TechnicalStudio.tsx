@@ -3,6 +3,7 @@ import { LineChart, Activity, Gauge, TrendingUp, SlidersHorizontal, RefreshCw } 
 import { fetchTechnicals } from '../api/client.ts';
 import { CandlestickChart } from '../components/CandlestickChart.tsx';
 import { MetricCard } from '../components/MetricCard.tsx';
+import { formatRatio, formatCurrency, formatPercent } from '../utils/financial.ts';
 
 interface TechnicalStudioProps {
   initialSymbol?: string;
@@ -112,31 +113,31 @@ export const TechnicalStudio: React.FC<TechnicalStudioProps> = ({ initialSymbol 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <MetricCard
             title="14-Day RSI"
-            value={rsi !== null && rsi !== undefined ? Number(rsi).toFixed(2) : 'N/A'}
+            value={formatRatio(rsi, 2)}
             subtitle={rsiSignal}
             icon={<Gauge className="w-4 h-4" />}
           />
           <MetricCard
             title="SMA 50 / SMA 200"
-            value={sma50 ? `$${Number(sma50).toFixed(2)}` : 'N/A'}
+            value={formatCurrency(sma50)}
             subtitle={trendSignal}
             icon={<TrendingUp className="w-4 h-4" />}
           />
           <MetricCard
             title="MACD Histogram"
-            value={latest.macd_histogram !== null && latest.macd_histogram !== undefined ? Number(latest.macd_histogram).toFixed(2) : 'N/A'}
-            subtitle={`Signal: ${latest.macd_signal ?? 'N/A'}`}
+            value={formatRatio(latest.macd_histogram, 2)}
+            subtitle={`Signal: ${formatRatio(latest.macd_signal, 2)}`}
             icon={<SlidersHorizontal className="w-4 h-4" />}
           />
           <MetricCard
             title="Bollinger Bands"
-            value={latest.bollinger_middle ? `$${Number(latest.bollinger_middle).toFixed(2)}` : 'N/A'}
-            subtitle={`[${latest.bollinger_lower ?? '-'} - ${latest.bollinger_upper ?? '-'}]`}
+            value={formatCurrency(latest.bollinger_middle)}
+            subtitle={`[${formatRatio(latest.bollinger_lower, 2)} - ${formatRatio(latest.bollinger_upper, 2)}]`}
             icon={<LineChart className="w-4 h-4" />}
           />
           <MetricCard
             title="Annualized Volatility"
-            value={latest.annualized_volatility ? `${(Number(latest.annualized_volatility) * 100).toFixed(1)}%` : 'N/A'}
+            value={formatPercent(latest.annualized_volatility, 1)}
             subtitle="252 Trading Days"
             icon={<Activity className="w-4 h-4" />}
           />

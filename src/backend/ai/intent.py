@@ -98,6 +98,15 @@ class IntentClassifier:
         "portfolio", "holding", "allocation", "excel", "herfindahl", "diversification", "weights"
     ]
 
+    NON_TICKER_TERMS = {
+        "I", "A", "THE", "AND", "FOR", "AI", "OR", "ON", "IN", "IS", "TO", "OF",
+        "SHOW", "WHAT", "BUY", "SELL", "VS", "IF", "MY", "WITH", "FROM", "AT",
+        "BY", "AN", "BE", "DO", "HOW", "WHY", "CAN", "ALL", "NEW", "GET",
+        "RSI", "SMA", "EMA", "MACD", "BB", "ATR", "VWAP", "EPS", "PE", "ROE",
+        "ROA", "USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CEO", "CFO",
+        "SEC", "API", "NAV", "HHI", "EOD", "ETF", "ADR", "MIC", "CIK", "FY"
+    }
+
     def extract_symbols(self, text: str) -> List[str]:
         """Extracts ticker symbols from uppercase patterns or known company names."""
         found: Set[str] = set()
@@ -110,10 +119,9 @@ class IntentClassifier:
 
         # 2. Uppercase word matches: 1-5 letters or dots (e.g. HSBA.L)
         raw_words = re.findall(r'\b[A-Z]{1,5}(?:\.[A-Z]{1,3})?\b', text)
-        stopwords = {"I", "A", "THE", "AND", "FOR", "AI", "OR", "ON", "IN", "IS", "TO", "OF", "SHOW", "WHAT", "BUY", "SELL", "VS", "IF", "MY"}
         for word in raw_words:
-            if word not in stopwords:
-                if word in self.KNOWN_TICKERS or len(word) >= 2:
+            if word not in self.NON_TICKER_TERMS:
+                if word in self.KNOWN_TICKERS or (len(word) >= 2 and not word.isdigit()):
                     found.add(word)
 
         return sorted(list(found))
@@ -135,7 +143,8 @@ class IntentClassifier:
             return ExtractedEntities(symbols=symbols, intent=FinancialIntent.SCENARIO_SIMULATION, confidence=0.95)
 
         # Check for stock comparison intent
-        is_comparison = any(kw in lower for kw in self.COMPARISON_KEYWORDS) or ("compare" in lower) or (len(symbols) >= 2 and any(w in lower for w in ["vs", "or", "better", "which"]))
+        has_comp_word = any(re.search(r'\b' + re.escape(w) + r'\b', lower) for w in ["vs", "versus", "better", "which", "compare", "compared"])
+        is_comparison = any(kw in lower for kw in self.COMPARISON_KEYWORDS) or has_comp_word
         if is_comparison and len(symbols) >= 2:
             return ExtractedEntities(symbols=symbols, intent=FinancialIntent.STOCK_COMPARISON, confidence=0.94)
 

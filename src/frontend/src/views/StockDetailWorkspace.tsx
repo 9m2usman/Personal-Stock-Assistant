@@ -27,6 +27,15 @@ import {
   enqueueResearchJob
 } from '../api/client.ts';
 import { CandlestickChart } from '../components/CandlestickChart.tsx';
+import {
+  parseFinancialNumber,
+  formatRatio,
+  formatPercent,
+  formatCurrency,
+  formatBillions,
+  formatChange,
+  formatScore
+} from '../utils/financial.ts';
 
 interface StockDetailWorkspaceProps {
   symbol: string;
@@ -93,6 +102,15 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
   const balance = fundamentals?.latest_balance_sheet;
   const cashflow = fundamentals?.latest_cash_flow;
 
+  const getMetric = (stmt: any, keys: string[]) => {
+    if (!stmt) return null;
+    for (const k of keys) {
+      if (stmt.metrics && stmt.metrics[k] !== undefined && stmt.metrics[k] !== null) return stmt.metrics[k];
+      if (stmt[k] !== undefined && stmt[k] !== null) return stmt[k];
+    }
+    return null;
+  };
+
   const tabs = [
     { id: 'overview', label: 'Company Overview', icon: Building2 },
     { id: 'chart', label: 'Candlestick Studio', icon: Activity },
@@ -132,7 +150,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
         {/* Price & Change Widget */}
         <div className="text-left md:text-right bg-[var(--bg-card)] md:bg-transparent p-3 md:p-0 rounded-xl border md:border-0 border-[var(--border-subtle)] w-full md:w-auto">
           <div className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] font-mono tabular-nums">
-            {quote?.price != null && !isNaN(Number(quote.price)) ? `$${Number(quote.price).toFixed(2)}` : '—'}
+            {formatCurrency(quote?.price, 2)}
           </div>
           <div
             className={`text-xs font-mono font-bold flex items-center md:justify-end gap-1 mt-0.5 ${
@@ -141,9 +159,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
           >
             {isPos ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
             <span>
-              {quote?.change != null && !isNaN(Number(quote.change))
-                ? `${isPos ? '+' : ''}${Number(quote.change).toFixed(2)} (${quote.change_percent != null && !isNaN(Number(quote.change_percent)) ? `${isPos ? '+' : ''}${Number(quote.change_percent).toFixed(2)}%` : '—'})`
-                : '—'}
+              {formatChange(quote?.change, quote?.change_percent)}
             </span>
           </div>
         </div>
@@ -181,7 +197,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                 Market Capitalization
               </div>
               <div className="text-lg font-extrabold text-[var(--text-primary)] font-mono mt-1 tabular-nums">
-                {profile.market_cap ? `$${(profile.market_cap / 1e9).toFixed(2)}B` : '—'}
+                {formatBillions(profile.market_cap)}
               </div>
             </div>
 
@@ -190,7 +206,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                 P/E Valuation Ratio
               </div>
               <div className="text-lg font-extrabold text-[var(--text-primary)] font-mono mt-1 tabular-nums">
-                {ratios.pe_ratio ? ratios.pe_ratio.toFixed(2) : '—'}
+                {formatRatio(ratios.pe_ratio)}
               </div>
             </div>
 
@@ -199,7 +215,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                 Return on Equity (ROE)
               </div>
               <div className="text-lg font-extrabold text-emerald-400 font-mono mt-1 tabular-nums">
-                {ratios.roe ? `${(ratios.roe * 100).toFixed(2)}%` : '—'}
+                {formatPercent(ratios.return_on_equity_percent ?? ratios.roe, 2, ratios.return_on_equity_percent != null || (ratios.roe != null && ratios.roe > 1.0))}
               </div>
             </div>
 
@@ -208,7 +224,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                 Gross Profit Margin
               </div>
               <div className="text-lg font-extrabold text-emerald-400 font-mono mt-1 tabular-nums">
-                {ratios.gross_margin ? `${(ratios.gross_margin * 100).toFixed(2)}%` : '—'}
+                {formatPercent(ratios.gross_margin_percent ?? ratios.gross_margin, 2, ratios.gross_margin_percent != null || (ratios.gross_margin != null && ratios.gross_margin > 1.0))}
               </div>
             </div>
           </div>
@@ -315,31 +331,31 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-medium">Total Revenue</td>
                     <td className="py-2.5 text-right font-bold text-emerald-400">
-                      ${income.total_revenue ? (income.total_revenue / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(income, ['revenue', 'total_revenue', 'totalRevenue']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-secondary)]">Cost of Goods Sold (COGS)</td>
                     <td className="py-2.5 text-right text-[var(--text-muted)]">
-                      ${income.cost_of_revenue ? (income.cost_of_revenue / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(income, ['costOfRevenue', 'cost_of_revenue', 'cogs']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-medium">Gross Profit</td>
                     <td className="py-2.5 text-right font-bold">
-                      ${income.gross_profit ? (income.gross_profit / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(income, ['grossProfit', 'gross_profit']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-medium">Operating Income (EBIT)</td>
                     <td className="py-2.5 text-right font-bold text-emerald-400">
-                      ${income.operating_income ? (income.operating_income / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(income, ['operatingIncome', 'operating_income', 'ebit']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-extrabold">Net Income</td>
                     <td className="py-2.5 text-right font-extrabold text-emerald-400">
-                      ${income.net_income ? (income.net_income / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(income, ['netIncome', 'net_income']))}
                     </td>
                   </tr>
                 </tbody>
@@ -358,25 +374,25 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-medium">Cash & Cash Equivalents</td>
                     <td className="py-2.5 text-right font-bold text-emerald-400">
-                      ${balance.cash_and_equivalents ? (balance.cash_and_equivalents / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(balance, ['cashAndCashEquivalentsAtCarryingValue', 'cashAndCashEquivalents', 'cash_and_equivalents']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-medium">Total Assets</td>
                     <td className="py-2.5 text-right font-bold">
-                      ${balance.total_assets ? (balance.total_assets / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(balance, ['totalAssets', 'total_assets']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-secondary)]">Total Liabilities</td>
                     <td className="py-2.5 text-right text-[var(--text-muted)]">
-                      ${balance.total_liabilities ? (balance.total_liabilities / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(balance, ['totalLiabilities', 'total_liabilities']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-extrabold">Total Stockholders Equity</td>
                     <td className="py-2.5 text-right font-extrabold text-emerald-400">
-                      ${balance.total_equity ? (balance.total_equity / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(balance, ['totalStockholdersEquity', 'total_equity']))}
                     </td>
                   </tr>
                 </tbody>
@@ -395,19 +411,19 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-medium">Operating Cash Flow</td>
                     <td className="py-2.5 text-right font-bold text-emerald-400">
-                      ${cashflow.operating_cash_flow ? (cashflow.operating_cash_flow / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(cashflow, ['netCashProvidedByOperatingActivities', 'operating_cash_flow', 'operatingCashFlow']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-secondary)]">Capital Expenditures (CapEx)</td>
                     <td className="py-2.5 text-right text-rose-400">
-                      ${cashflow.capital_expenditure ? (cashflow.capital_expenditure / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(cashflow, ['capitalExpenditure', 'capital_expenditure', 'capex']))}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 text-[var(--text-primary)] font-extrabold">Free Cash Flow (FCF)</td>
                     <td className="py-2.5 text-right font-extrabold text-emerald-400">
-                      ${cashflow.free_cash_flow ? (cashflow.free_cash_flow / 1e9).toFixed(2) : '—'}B
+                      {formatBillions(getMetric(cashflow, ['freeCashFlow', 'free_cash_flow']))}
                     </td>
                   </tr>
                 </tbody>
@@ -435,13 +451,13 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
               <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-between font-mono">
                 <span>SMA 50-Day Period</span>
                 <span className="font-bold text-emerald-400">
-                  {technicals?.indicators?.sma_50?.slice(-1)[0]?.value?.toFixed(2) || '—'}
+                  {formatRatio(technicals?.indicators?.sma_50?.slice(-1)[0]?.value ?? technicals?.latest_indicators?.sma_50, 2)}
                 </span>
               </div>
               <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-between font-mono">
                 <span>SMA 200-Day Period</span>
                 <span className="font-bold text-emerald-400">
-                  {technicals?.indicators?.sma_200?.slice(-1)[0]?.value?.toFixed(2) || '—'}
+                  {formatRatio(technicals?.indicators?.sma_200?.slice(-1)[0]?.value ?? technicals?.latest_indicators?.sma_200, 2)}
                 </span>
               </div>
             </div>
@@ -456,7 +472,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
               <div className="flex items-center justify-between font-mono">
                 <span className="text-xs text-[var(--text-secondary)]">Current RSI Value</span>
                 <span className="text-lg font-extrabold text-emerald-400">
-                  {technicals?.indicators?.rsi_14?.slice(-1)[0]?.value?.toFixed(1) || '58.4'}
+                  {formatRatio(technicals?.indicators?.rsi_14?.slice(-1)[0]?.value ?? technicals?.latest_indicators?.rsi_14, 1, '58.4')}
                 </span>
               </div>
               <div className="text-[11px] text-[var(--text-muted)]">
@@ -490,7 +506,7 @@ export const StockDetailWorkspace: React.FC<StockDetailWorkspaceProps> = ({
                   : isBull
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                   : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)]';
-                const formattedScore = score != null ? (score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2)) : '—';
+                const formattedScore = formatScore(score, 2, '—');
                 return (
                   <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded ${badgeClass}`}>
                     {label} Polarity ({formattedScore})

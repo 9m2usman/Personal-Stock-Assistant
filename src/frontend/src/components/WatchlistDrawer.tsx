@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, RefreshCw, TrendingUp, TrendingDown, Star, Globe, ShieldCheck, AlertCircle } from 'lucide-react';
 import { fetchWatchlist, WatchlistItem, searchInstruments, NormalizedInstrument } from '../api/client.ts';
+import { formatRatio, formatChange } from '../utils/financial.ts';
 
 interface WatchlistDrawerProps {
   isOpen: boolean;
@@ -192,7 +193,7 @@ export const WatchlistDrawer: React.FC<WatchlistDrawerProps> = ({
                   {hasPrice ? (
                     <>
                       <div className="text-xs font-bold text-slate-100">
-                        {item.currency} {item.price != null && !isNaN(Number(item.price)) ? Number(item.price).toFixed(2) : '—'}
+                        {item.currency} {formatRatio(item.price, 2)}
                       </div>
                       <div
                         className={`text-[11px] font-semibold flex items-center justify-end gap-0.5 ${
@@ -201,9 +202,7 @@ export const WatchlistDrawer: React.FC<WatchlistDrawerProps> = ({
                       >
                         {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                         <span>
-                          {item.change != null && !isNaN(Number(item.change))
-                            ? `${isUp ? '+' : ''}${Number(item.change).toFixed(2)} (${item.change_percent != null && !isNaN(Number(item.change_percent)) ? `${isUp ? '+' : ''}${Number(item.change_percent).toFixed(2)}%` : '—'})`
-                            : '—'}
+                          {formatChange(item.change, item.change_percent)}
                         </span>
                       </div>
                     </>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sliders, Play, TrendingDown, TrendingUp, Sparkles, RefreshCcw } from 'lucide-react';
 import { simulateWhatIf } from '../api/client.ts';
 import { MetricCard } from '../components/MetricCard.tsx';
+import { formatCurrency, formatPercent, formatRatio } from '../utils/financial.ts';
 
 export const ScenarioLab: React.FC = () => {
   const [shockPercent, setShockPercent] = useState<number>(-10);
@@ -106,24 +107,24 @@ export const ScenarioLab: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <MetricCard
               title="Original Value"
-              value={`$${Number(result.original_total_value).toLocaleString()}`}
+              value={formatCurrency(result.original_total_value, 2)}
               subtitle="Baseline Portfolio"
             />
             <MetricCard
               title="Simulated Future Value"
-              value={`$${Number(result.simulated_total_value).toLocaleString()}`}
-              change={result.total_value_change >= 0 ? `+$${result.total_value_change}` : `-$${Math.abs(result.total_value_change)}`}
+              value={formatCurrency(result.simulated_total_value, 2)}
+              change={result.total_value_change >= 0 ? `+${formatCurrency(result.total_value_change, 2)}` : `-${formatCurrency(Math.abs(result.total_value_change), 2)}`}
               changePercent={result.total_value_change_percent}
             />
             <MetricCard
               title="Net Impact"
-              value={`$${result.total_value_change.toLocaleString()}`}
-              subtitle={`${result.total_value_change_percent}% Delta`}
+              value={formatCurrency(result.total_value_change, 2)}
+              subtitle={`${formatPercent(result.total_value_change_percent, 2, true)} Delta`}
             />
             <MetricCard
               title="Projected HHI"
-              value={Number(result.simulated_hhi).toFixed(3)}
-              subtitle={`Baseline: ${result.original_hhi}`}
+              value={formatRatio(result.simulated_hhi, 3)}
+              subtitle={`Baseline: ${formatRatio(result.original_hhi, 3)}`}
             />
           </div>
 
@@ -147,12 +148,12 @@ export const ScenarioLab: React.FC = () => {
                     return (
                       <tr key={idx} className="hover:bg-slate-850/50 transition">
                         <td className="py-2.5 font-bold text-slate-100">{p.symbol}</td>
-                        <td className="py-2.5 text-right">${p.original_value.toLocaleString()}</td>
-                        <td className="py-2.5 text-right font-semibold text-slate-100">${p.simulated_value.toLocaleString()}</td>
+                        <td className="py-2.5 text-right">{formatCurrency(p.original_value, 2)}</td>
+                        <td className="py-2.5 text-right font-semibold text-slate-100">{formatCurrency(p.simulated_value, 2)}</td>
                         <td className={`py-2.5 text-right font-semibold ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {isUp ? `+$${p.value_change}` : `-$${Math.abs(p.value_change)}`}
+                          {isUp ? `+${formatCurrency(p.value_change, 2)}` : `-${formatCurrency(Math.abs(p.value_change), 2)}`}
                         </td>
-                        <td className="py-2.5 text-right font-bold text-slate-200">{p.new_weight_percent}%</td>
+                        <td className="py-2.5 text-right font-bold text-slate-200">{formatPercent(p.new_weight_percent, 2, true)}</td>
                       </tr>
                     );
                   })}

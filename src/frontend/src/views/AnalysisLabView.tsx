@@ -241,7 +241,7 @@ print(f"Annualized Historical Volatility: {annualized_volatility:.2f}%")
                     <div className="text-rose-400">{sandboxResult.error_message}</div>
                   )}
                   <div className="pt-2 border-t border-[var(--border-subtle)] text-[10px] text-[var(--text-muted)] flex justify-between">
-                    <span>Execution Duration: {sandboxResult.execution_time_seconds ? `${(sandboxResult.execution_time_seconds * 1000).toFixed(1)}ms` : '—'}</span>
+                    <span>Execution Duration: {sandboxResult.execution_time_seconds !== undefined && sandboxResult.execution_time_seconds !== null ? `${(Number(sandboxResult.execution_time_seconds) * 1000).toFixed(1)}ms` : '—'}</span>
                     <span>Subprocess Monitored</span>
                   </div>
                 </div>

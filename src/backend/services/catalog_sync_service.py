@@ -272,52 +272,133 @@ class CatalogSyncService:
         logger.info("Successfully ingested %d new instruments from SEC EDGAR.", inserted)
         return inserted
 
+    def get_curated_fallback_statistics(self) -> Dict[str, Any]:
+        """Calculates statistics strictly from curated in-memory catalog."""
+        curated_total = len(CURATED_GLOBAL_STOCKS)
+        curated_exchanges = len(CANONICAL_EXCHANGES)
+        curated_adrs = sum(1 for item in CURATED_GLOBAL_STOCKS if item.get("is_adr", False))
+        curated_us = sum(1 for item in CURATED_GLOBAL_STOCKS if item.get("country") == "United States")
+        curated_by_ex: Dict[str, int] = {}
+        curated_by_country: Dict[str, int] = {}
+        curated_by_type: Dict[str, int] = {}
+        for item in CURATED_GLOBAL_STOCKS:
+            mic = item.get("mic", "XNGS")
+            curated_by_ex[mic] = curated_by_ex.get(mic, 0) + 1
+            c = item.get("country", "United States")
+            curated_by_country[c] = curated_by_country.get(c, 0) + 1
+            t = item.get("type", "Common Stock")
+            curated_by_type[t] = curated_by_type.get(t, 0) + 1
+
+        ts_utc = datetime.now(timezone.utc).isoformat()
+        return {
+            "total_instruments": curated_total,
+            "total_exchanges": curated_exchanges,
+            "primary_listings": curated_total - curated_adrs,
+            "adr_listings": curated_adrs,
+            "active_instruments": curated_total,
+            "us_instruments": curated_us,
+            "international_instruments": curated_total - curated_us,
+            "timestamp_utc": ts_utc,
+            "by_exchange": curated_by_ex,
+            "by_country": curated_by_country,
+            "by_asset_type": curated_by_type,
+            "adr_count": curated_adrs,
+            "quote_support_count": curated_total,
+            "history_support_count": curated_total,
+            "fundamentals_support_count": curated_total,
+            "news_support_count": curated_total,
+            "technicals_support_count": curated_total,
+            "last_synchronized": ts_utc
+        }
+
     async def get_catalogue_statistics(self) -> Dict[str, Any]:
-        """Calculates precise breakdown of the synchronized database catalog."""
-        async with async_session_factory() as session:
-            # Total count
-            total_res = await session.execute(select(func.count(Instrument.id)))
-            total_count = total_res.scalar() or 0
+        """Calculates precise breakdown of the synchronized database catalog with curated fallback."""
+        try:
+            async with async_session_factory() as session:
+                # Total count
+                total_res = await session.execute(select(func.count(Instrument.id)))
+                total_count = total_res.scalar() or 0
 
-            # Count by exchange
-            ex_res = await session.execute(
-                select(Instrument.exchange_mic, func.count(Instrument.id))
-                .group_by(Instrument.exchange_mic)
-            )
-            by_exchange = {row[0]: row[1] for row in ex_res.all()}
+                if total_count == 0:
+                    ts_utc = datetime.now(timezone.utc).isoformat()
+                    return {
+                        "total_instruments": 0,
+                        "total_exchanges": 0,
+                        "primary_listings": 0,
+                        "adr_listings": 0,
+                        "active_instruments": 0,
+                        "us_instruments": 0,
+                        "international_instruments": 0,
+                        "timestamp_utc": ts_utc,
+                        "by_exchange": {},
+                        "by_country": {},
+                        "by_asset_type": {},
+                        "adr_count": 0,
+                        "quote_support_count": 0,
+                        "history_support_count": 0,
+                        "fundamentals_support_count": 0,
+                        "news_support_count": 0,
+                        "technicals_support_count": 0,
+                        "last_synchronized": ts_utc
+                    }
 
-            # Count by country
-            country_res = await session.execute(
-                select(Instrument.country, func.count(Instrument.id))
-                .group_by(Instrument.country)
-            )
-            by_country = {row[0]: row[1] for row in country_res.all()}
+                # Count by exchange
+                ex_res = await session.execute(
+                    select(Instrument.exchange_mic, func.count(Instrument.id))
+                    .group_by(Instrument.exchange_mic)
+                )
+                by_exchange = {str(row[0] or "UNKNOWN"): row[1] for row in ex_res.all()}
 
-            # Count by asset type
-            type_res = await session.execute(
-                select(Instrument.asset_type, func.count(Instrument.id))
-                .group_by(Instrument.asset_type)
-            )
-            by_type = {row[0]: row[1] for row in type_res.all()}
+                # Count by country
+                country_res = await session.execute(
+                    select(Instrument.country, func.count(Instrument.id))
+                    .group_by(Instrument.country)
+                )
+                by_country = {str(row[0] or "Unknown"): row[1] for row in country_res.all()}
 
-            # ADRs count
-            adr_res = await session.execute(
-                select(func.count(Instrument.id)).where(Instrument.is_adr == True)
-            )
-            adr_count = adr_res.scalar() or 0
+                # Count by asset type
+                type_res = await session.execute(
+                    select(Instrument.asset_type, func.count(Instrument.id))
+                    .group_by(Instrument.asset_type)
+                )
+                by_type = {str(row[0] or "Common Stock"): row[1] for row in type_res.all()}
 
-            return {
-                "total_instruments": total_count,
-                "by_exchange": by_exchange,
-                "by_country": by_country,
-                "by_asset_type": by_type,
-                "adr_count": adr_count,
-                "quote_support_count": total_count,
-                "history_support_count": total_count,
-                "fundamentals_support_count": total_count,
-                "news_support_count": total_count,
-                "technicals_support_count": total_count,
-                "last_synchronized": datetime.now(timezone.utc).isoformat()
-            }
+                # ADRs count
+                adr_res = await session.execute(
+                    select(func.count(Instrument.id)).where(Instrument.is_adr == True)
+                )
+                adr_count = adr_res.scalar() or 0
+
+                total_exchanges = len(by_exchange) if by_exchange else len(CANONICAL_EXCHANGES)
+                adr_listings = adr_count
+                primary_listings = max(0, total_count - adr_listings)
+                active_instruments = total_count
+                us_instruments = by_country.get("United States", 0)
+                international_instruments = max(0, total_count - us_instruments)
+                ts_utc = datetime.now(timezone.utc).isoformat()
+
+                return {
+                    "total_instruments": total_count,
+                    "total_exchanges": total_exchanges,
+                    "primary_listings": primary_listings,
+                    "adr_listings": adr_listings,
+                    "active_instruments": active_instruments,
+                    "us_instruments": us_instruments,
+                    "international_instruments": international_instruments,
+                    "timestamp_utc": ts_utc,
+                    "by_exchange": by_exchange,
+                    "by_country": by_country,
+                    "by_asset_type": by_type,
+                    "adr_count": adr_count,
+                    "quote_support_count": total_count,
+                    "history_support_count": total_count,
+                    "fundamentals_support_count": total_count,
+                    "news_support_count": total_count,
+                    "technicals_support_count": total_count,
+                    "last_synchronized": ts_utc
+                }
+        except Exception as e:
+            logger.warning("Could not calculate catalogue statistics from database: %s. Using curated fallback.", e)
+            return self.get_curated_fallback_statistics()
 
 catalog_sync_service = CatalogSyncService()

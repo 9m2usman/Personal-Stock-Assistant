@@ -108,3 +108,36 @@ async def test_jobs_health_and_research_task_e2e():
         assert "status" in h_data
         assert "tasks.generate_deep_research_report" in h_data["registered_domain_tasks"]
 
+@pytest.mark.asyncio
+async def test_catalogue_stats_and_pagination_e2e():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/api/v1/market/instruments/stats")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["total_instruments"] > 0
+        assert data["total_exchanges"] > 0
+        assert data["primary_listings"] >= 0
+        assert data["adr_listings"] >= 0
+        assert "timestamp_utc" in data
+
+        res_page = await ac.get("/api/v1/market/instruments/paginated?page=1&page_size=10")
+        assert res_page.status_code == 200
+        page_data = res_page.json()
+        assert "items" in page_data
+        assert "total" in page_data
+        assert len(page_data["items"]) <= 10
+
+@pytest.mark.asyncio
+async def test_fundamentals_overview_and_ratios_e2e():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/api/v1/fundamentals/overview?symbol=NVDA")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["symbol"] == "NVDA"
+        assert "profile" in data
+        assert "ratios" in data
+        ratios = data["ratios"]
+        # Numeric or null verification (must not be invalid string objects)
+        assert ratios["pe_ratio"] is None or isinstance(ratios["pe_ratio"], (int, float))
+
+

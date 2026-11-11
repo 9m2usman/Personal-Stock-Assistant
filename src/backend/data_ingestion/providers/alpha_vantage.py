@@ -21,7 +21,7 @@ class AlphaVantageClient(BaseMarketDataProvider):
     def __init__(self):
         self.api_key = settings.ALPHA_VANTAGE_API_KEY.get_secret_value() if settings.ALPHA_VANTAGE_API_KEY else ""
         self.base_url = "https://www.alphavantage.co/query"
-        self.timeout = 15.0
+        self.timeout = getattr(settings, "PROVIDER_TIMEOUT_SECONDS", 3.5)
 
     @property
     def provider_name(self) -> str:

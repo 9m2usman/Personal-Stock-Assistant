@@ -28,6 +28,7 @@ import {
   WatchlistItem,
   CompanySentiment
 } from '../api/client.ts';
+import { formatCurrency, formatPercent, formatRatio, formatScore, parseFinancialNumber } from '../utils/financial.ts';
 import { CandlestickChart } from '../components/CandlestickChart.tsx';
 import { GlobalMarketGlobe3D } from '../components/GlobalMarketGlobe3D.tsx';
 import { useTheme } from '../context/ThemeContext.tsx';
@@ -171,14 +172,10 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               Total Monitored NAV ({portfolioAnalytics.base_currency || 'USD'})
             </div>
             <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] tabular-nums mt-1 font-mono">
-              {portfolioAnalytics.total_market_value != null && !isNaN(Number(portfolioAnalytics.total_market_value))
-                ? `$${Number(portfolioAnalytics.total_market_value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                : '—'}
+              {formatCurrency(portfolioAnalytics.total_market_value)}
             </div>
             <div className="text-[11px] text-[var(--text-muted)] font-mono mt-1">
-              Cost Basis: {portfolioAnalytics.total_cost_basis != null && !isNaN(Number(portfolioAnalytics.total_cost_basis))
-                ? `$${Number(portfolioAnalytics.total_cost_basis).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                : '—'}
+              Cost Basis: {formatCurrency(portfolioAnalytics.total_cost_basis)}
             </div>
           </div>
 
@@ -195,9 +192,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                   : 'text-[var(--text-muted)]'
               }`}
             >
-              {portfolioAnalytics.total_unrealized_pnl != null && !isNaN(Number(portfolioAnalytics.total_unrealized_pnl))
-                ? `${Number(portfolioAnalytics.total_unrealized_pnl) >= 0 ? '+' : '-'}$${Math.abs(Number(portfolioAnalytics.total_unrealized_pnl)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                : '—'}
+              {formatCurrency(portfolioAnalytics.total_unrealized_pnl)}
             </div>
             <div
               className={`text-[11px] font-mono font-semibold mt-1 flex items-center gap-1 ${
@@ -214,9 +209,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 <TrendingUp className="w-3.5 h-3.5" />
               )}
               <span>
-                {portfolioAnalytics.total_unrealized_pnl_percent != null && !isNaN(Number(portfolioAnalytics.total_unrealized_pnl_percent))
-                  ? `${Number(portfolioAnalytics.total_unrealized_pnl_percent) >= 0 ? '+' : ''}${Number(portfolioAnalytics.total_unrealized_pnl_percent).toFixed(2)}% Return on Capital`
-                  : '— Return on Capital'}
+                {formatPercent(portfolioAnalytics.total_unrealized_pnl_percent, 2, true, '—')} Return on Capital
               </span>
             </div>
           </div>
@@ -231,7 +224,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               </span>
               {quote && (
                 <span className="text-sm font-bold text-[var(--text-primary)] tabular-nums font-mono">
-                  {quote.price != null && !isNaN(Number(quote.price)) ? `$${Number(quote.price).toFixed(2)}` : '—'}
+                  {formatCurrency(quote.price)}
                 </span>
               )}
             </div>
@@ -246,7 +239,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 Concentration Index
               </div>
               <div className="text-lg font-bold text-[var(--text-primary)] mt-1 font-mono">
-                HHI {portfolioAnalytics.herfindahl_index != null ? Number(portfolioAnalytics.herfindahl_index).toFixed(3) : '—'} · {portfolioAnalytics.concentration_risk_level || 'EVALUATED'}
+                HHI {formatRatio(portfolioAnalytics.herfindahl_index, 3, '—')} · {portfolioAnalytics.concentration_risk_level || 'EVALUATED'}
               </div>
             </div>
             <button
@@ -427,21 +420,14 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
 
                     <div className="text-right">
                       <div className="text-xs font-bold font-mono text-[var(--text-primary)] tabular-nums">
-                        {item.price != null && !isNaN(Number(item.price)) ? `$${Number(item.price).toFixed(2)}` : '—'}
+                        {formatCurrency(item.price)}
                       </div>
                       <div
                         className={`text-[10px] font-mono font-semibold flex items-center justify-end gap-0.5 ${
                           isPos ? 'text-emerald-400' : 'text-rose-400'
                         }`}
                       >
-                        {item.change_percent != null && !isNaN(Number(item.change_percent)) ? (
-                          <>
-                            {isPos ? '+' : ''}
-                            {Number(item.change_percent).toFixed(2)}%
-                          </>
-                        ) : (
-                          <span className="text-[var(--text-muted)]">—</span>
-                        )}
+                        {formatPercent(item.change_percent, 2, true, '—')}
                       </div>
                     </div>
                   </button>
@@ -477,19 +463,13 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 <div>
                   <div className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Polarity Score</div>
                   {(() => {
-                    const score = typeof sentiment.aggregate_score === 'number'
-                      ? sentiment.aggregate_score
-                      : typeof sentiment.average_sentiment_score === 'number'
-                      ? sentiment.average_sentiment_score
-                      : null;
+                    const score = parseFinancialNumber(sentiment.aggregate_score ?? sentiment.average_sentiment_score);
                     const scoreColor = score !== null && score > 0
                       ? 'text-emerald-400'
                       : score !== null && score < 0
                       ? 'text-rose-400'
                       : 'text-[var(--text-muted)]';
-                    const formattedScore = score !== null
-                      ? (score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2))
-                      : '—';
+                    const formattedScore = formatScore(score, 2, '—');
                     return (
                       <div className={`text-lg font-extrabold font-mono ${scoreColor}`}>
                         {formattedScore}
@@ -498,11 +478,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                   })()}
                 </div>
                 {(() => {
-                  const score = typeof sentiment.aggregate_score === 'number'
-                    ? sentiment.aggregate_score
-                    : typeof sentiment.average_sentiment_score === 'number'
-                    ? sentiment.average_sentiment_score
-                    : null;
+                  const score = parseFinancialNumber(sentiment.aggregate_score ?? sentiment.average_sentiment_score);
                   const label = sentiment.classification || sentiment.sentiment_label || 'NEUTRAL';
                   const isBull = label === 'BULLISH' || label === 'POSITIVE' || (score !== null && score > 0.15);
                   const isBear = label === 'BEARISH' || label === 'NEGATIVE' || (score !== null && score < -0.15);

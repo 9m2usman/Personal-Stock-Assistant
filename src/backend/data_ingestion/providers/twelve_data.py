@@ -21,7 +21,7 @@ class TwelveDataClient(BaseMarketDataProvider):
     def __init__(self):
         self.api_key = settings.TWELVE_DATA_API_KEY.get_secret_value() if settings.TWELVE_DATA_API_KEY else ""
         self.base_url = "https://api.twelvedata.com"
-        self.timeout = 15.0
+        self.timeout = getattr(settings, "PROVIDER_TIMEOUT_SECONDS", 3.5)
 
     @property
     def provider_name(self) -> str:

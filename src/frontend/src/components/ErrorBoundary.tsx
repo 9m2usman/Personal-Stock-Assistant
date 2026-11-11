@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 {this.state.error?.message ? ` Error: ${this.state.error.message}` : ''}
               </p>
 
-              {this.state.error && (
+              {this.state.error && import.meta.env.DEV && (
                 <details className="mt-3 p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[11px] font-mono text-rose-300 overflow-x-auto">
                   <summary className="cursor-pointer text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] select-none">
                     View Diagnostic Details

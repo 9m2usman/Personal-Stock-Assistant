@@ -16,7 +16,7 @@ class NewsAPIClient(BaseNewsProvider):
     def __init__(self):
         self.api_key = settings.NEWSAPI_API_KEY.get_secret_value() if settings.NEWSAPI_API_KEY else ""
         self.base_url = "https://newsapi.org/v2"
-        self.timeout = 15.0
+        self.timeout = getattr(settings, "PROVIDER_TIMEOUT_SECONDS", 3.5)
 
     @property
     def provider_name(self) -> str:

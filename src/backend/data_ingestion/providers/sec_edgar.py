@@ -24,7 +24,7 @@ class SECEDGARClient(BaseFundamentalProvider):
             "User-Agent": settings.SEC_EDGAR_USER_AGENT,
             "Accept": "application/json"
         }
-        self.timeout = 15.0
+        self.timeout = getattr(settings, "PROVIDER_TIMEOUT_SECONDS", 3.5)
 
     @property
     def provider_name(self) -> str:

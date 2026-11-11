@@ -11,9 +11,13 @@ from pydantic import BaseModel, Field
 
 class DataFreshness(str, Enum):
     REAL_TIME = "REAL_TIME"
+    REALTIME = "REALTIME"
     DELAYED = "DELAYED"
+    DELAYED_15M = "DELAYED_15M"
     END_OF_DAY = "END_OF_DAY"
+    DAILY_CLOSE = "DAILY_CLOSE"
     HISTORICAL = "HISTORICAL"
+    SYNTHETIC_FALLBACK = "SYNTHETIC_FALLBACK"
 
 class NormalizedBar(BaseModel):
     """Standardized OHLCV time-series bar."""

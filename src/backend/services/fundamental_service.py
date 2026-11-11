@@ -4,7 +4,7 @@ Standardizes 3-statement financial accounting data, SEC EDGAR XBRL facts, and de
 """
 from typing import List, Optional, Dict, Any
 from decimal import Decimal, InvalidOperation, getcontext
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from src.backend.data_ingestion.router import financial_router, FinancialDataRouter
 from src.backend.data_ingestion.base import NormalizedProfile, NormalizedFinancialStatement
 from src.backend.core.logging import logger
@@ -23,6 +23,21 @@ class FinancialRatios(BaseModel):
     pe_ratio: Optional[Decimal] = None
     free_cash_flow: Optional[Decimal] = None
     eps: Optional[Decimal] = None
+
+    # Canonical aliases to prevent frontend interface mismatches
+    gross_margin: Optional[Decimal] = None
+    roe: Optional[Decimal] = None
+    roa: Optional[Decimal] = None
+    debt_to_equity: Optional[Decimal] = None
+
+    @field_serializer(
+        "gross_margin_percent", "net_margin_percent", "return_on_equity_percent",
+        "return_on_assets_percent", "debt_to_equity_ratio", "current_ratio",
+        "pe_ratio", "free_cash_flow", "eps", "gross_margin", "roe", "roa",
+        "debt_to_equity", check_fields=False, when_used="json"
+    )
+    def serialize_decimal_to_float(self, v: Optional[Decimal]) -> Optional[float]:
+        return float(v) if v is not None else None
 
 class CompanyFundamentals(BaseModel):
     """Comprehensive fundamental snapshot of an enterprise."""
@@ -124,7 +139,11 @@ class FundamentalAnalysisService:
             current_ratio=curr_ratio,
             pe_ratio=pe,
             free_cash_flow=free_cf,
-            eps=eps
+            eps=eps,
+            gross_margin=gross_margin,
+            roe=roe,
+            roa=roa,
+            debt_to_equity=debt_to_equity
         )
 
     async def get_profile(self, symbol: str) -> NormalizedProfile:

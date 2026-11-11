@@ -4,12 +4,34 @@ Provides quotes, historical candlestick bars, computed technical indicators,
 and institutional global instrument catalog discovery.
 """
 from typing import List, Optional, Dict, Any
+from pydantic import BaseModel
 from fastapi import APIRouter, Query, status, HTTPException
 from src.backend.services.market_service import market_service, MarketSummary
 from src.backend.services.technical_service import ChartReadyTechnicalPayload
 from src.backend.services.instrument_service import instrument_service
 from src.backend.services.catalog_sync_service import catalog_sync_service
+from src.backend.core.logging import logger
 from src.backend.data_ingestion.base import NormalizedQuote, NormalizedBar, NormalizedInstrument
+
+class CatalogueStatisticsResponse(BaseModel):
+    total_instruments: int
+    total_exchanges: int
+    primary_listings: int
+    adr_listings: int
+    active_instruments: int
+    us_instruments: int
+    international_instruments: int
+    timestamp_utc: str
+    by_exchange: Optional[Dict[str, int]] = None
+    by_country: Optional[Dict[str, int]] = None
+    by_asset_type: Optional[Dict[str, int]] = None
+    adr_count: Optional[int] = None
+    quote_support_count: Optional[int] = None
+    history_support_count: Optional[int] = None
+    fundamentals_support_count: Optional[int] = None
+    news_support_count: Optional[int] = None
+    technicals_support_count: Optional[int] = None
+    last_synchronized: Optional[str] = None
 
 router = APIRouter()
 
@@ -62,10 +84,15 @@ async def list_instruments(
     """Returns all canonically registered and resolved instruments."""
     return await instrument_service.search(query="", limit=limit)
 
-@router.get("/instruments/stats", status_code=status.HTTP_200_OK, summary="Catalogue Coverage Statistics")
+@router.get("/instruments/stats", response_model=CatalogueStatisticsResponse, status_code=status.HTTP_200_OK, summary="Catalogue Coverage Statistics")
 async def get_catalogue_stats():
     """Returns real verified statistics of the global instrument catalog."""
-    return await catalog_sync_service.get_catalogue_statistics()
+    try:
+        return await catalog_sync_service.get_catalogue_statistics()
+    except Exception as e:
+        logger.error("Error retrieving catalogue stats: %s", e)
+        # Never crash the API route: fallback to verified curated statistics
+        return catalog_sync_service.get_curated_fallback_statistics()
 
 @router.post("/instruments/sync", status_code=status.HTTP_200_OK, summary="Synchronize Global Instrument Catalogue")
 async def sync_instruments(

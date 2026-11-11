@@ -13,6 +13,12 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { fetchFundamentals, fetchQuote, searchInstruments, NormalizedInstrument } from '../api/client.ts';
+import {
+  parseFinancialNumber,
+  formatRatio,
+  formatPercent,
+  formatBillions
+} from '../utils/financial.ts';
 
 interface ResearchWorkspaceProps {
   onSelectSymbol: (symbol: string) => void;
@@ -93,10 +99,12 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
 
     return {
       name: sym,
-      peRatio: ratios?.pe_ratio || 0,
-      roePercent: ratios?.roe ? Number((ratios.roe * 100).toFixed(1)) : 0,
-      grossMarginPercent: ratios?.gross_margin ? Number((ratios.gross_margin * 100).toFixed(1)) : 0,
-      revenueBillion: income?.total_revenue ? Number((income.total_revenue / 1e9).toFixed(1)) : 0,
+      peRatio: parseFinancialNumber(ratios?.pe_ratio) || 0,
+      roePercent: parseFinancialNumber(ratios?.return_on_equity_percent ?? ratios?.roe) || 0,
+      grossMarginPercent: parseFinancialNumber(ratios?.gross_margin_percent ?? ratios?.gross_margin) || 0,
+      revenueBillion: parseFinancialNumber(income?.metrics?.revenue ?? income?.total_revenue)
+        ? Number(((parseFinancialNumber(income?.metrics?.revenue ?? income?.total_revenue)! / 1e9)).toFixed(1))
+        : 0,
     };
   });
 
@@ -234,7 +242,7 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
                 const pe = companyData[sym]?.fundamentals?.ratios?.pe_ratio;
                 return (
                   <td key={sym} className="py-3 text-right font-bold text-emerald-400">
-                    {pe != null && !isNaN(Number(pe)) ? Number(pe).toFixed(2) : '—'}
+                    {formatRatio(pe, 2)}
                   </td>
                 );
               })}
@@ -243,10 +251,11 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
             <tr>
               <td className="py-3 text-[var(--text-primary)] font-medium">Annual Revenue</td>
               {selectedSymbols.map((sym) => {
-                const rev = companyData[sym]?.fundamentals?.latest_income_statement?.total_revenue;
+                const rev = companyData[sym]?.fundamentals?.latest_income_statement?.total_revenue ??
+                            companyData[sym]?.fundamentals?.latest_income_statement?.metrics?.revenue;
                 return (
                   <td key={sym} className="py-3 text-right font-bold">
-                    {rev != null && !isNaN(Number(rev)) ? `$${(Number(rev) / 1e9).toFixed(2)}B` : '—'}
+                    {formatBillions(rev, 2)}
                   </td>
                 );
               })}
@@ -255,10 +264,11 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
             <tr>
               <td className="py-3 text-[var(--text-primary)] font-medium">Gross Profit Margin</td>
               {selectedSymbols.map((sym) => {
-                const gm = companyData[sym]?.fundamentals?.ratios?.gross_margin;
+                const gm = companyData[sym]?.fundamentals?.ratios?.gross_margin_percent ??
+                           companyData[sym]?.fundamentals?.ratios?.gross_margin;
                 return (
                   <td key={sym} className="py-3 text-right text-emerald-400 font-bold">
-                    {gm != null && !isNaN(Number(gm)) ? `${(Number(gm) * 100).toFixed(1)}%` : '—'}
+                    {formatPercent(gm, 1, companyData[sym]?.fundamentals?.ratios?.gross_margin_percent != null || (gm != null && gm > 1.0))}
                   </td>
                 );
               })}
@@ -267,10 +277,11 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
             <tr>
               <td className="py-3 text-[var(--text-primary)] font-medium">Net Profit Margin</td>
               {selectedSymbols.map((sym) => {
-                const nm = companyData[sym]?.fundamentals?.ratios?.net_margin;
+                const nm = companyData[sym]?.fundamentals?.ratios?.net_margin_percent ??
+                           companyData[sym]?.fundamentals?.ratios?.net_margin;
                 return (
                   <td key={sym} className="py-3 text-right font-bold">
-                    {nm != null && !isNaN(Number(nm)) ? `${(Number(nm) * 100).toFixed(1)}%` : '—'}
+                    {formatPercent(nm, 1, companyData[sym]?.fundamentals?.ratios?.net_margin_percent != null || (nm != null && nm > 1.0))}
                   </td>
                 );
               })}
@@ -279,10 +290,11 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
             <tr>
               <td className="py-3 text-[var(--text-primary)] font-medium">Debt-to-Equity Ratio</td>
               {selectedSymbols.map((sym) => {
-                const de = companyData[sym]?.fundamentals?.ratios?.debt_to_equity;
+                const de = companyData[sym]?.fundamentals?.ratios?.debt_to_equity_ratio ??
+                           companyData[sym]?.fundamentals?.ratios?.debt_to_equity;
                 return (
                   <td key={sym} className="py-3 text-right text-[var(--text-secondary)]">
-                    {de != null && !isNaN(Number(de)) ? Number(de).toFixed(2) : '—'}
+                    {formatRatio(de, 2)}
                   </td>
                 );
               })}

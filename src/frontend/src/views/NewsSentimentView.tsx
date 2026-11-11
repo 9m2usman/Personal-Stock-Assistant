@@ -13,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { fetchCompanySentiment, searchNews, CompanySentiment } from '../api/client.ts';
+import { formatScore, parseFinancialNumber } from '../utils/financial.ts';
 
 interface NewsSentimentViewProps {
   initialSymbol?: string;
@@ -136,16 +137,12 @@ export const NewsSentimentView: React.FC<NewsSentimentViewProps> = ({
                 Aggregate Sentiment
               </div>
               {(() => {
-                const score = typeof sentiment.aggregate_score === 'number'
-                  ? sentiment.aggregate_score
-                  : typeof sentiment.average_sentiment_score === 'number'
-                  ? sentiment.average_sentiment_score
-                  : null;
+                const score = parseFinancialNumber(sentiment.aggregate_score ?? sentiment.average_sentiment_score);
                 const label = sentiment.classification || sentiment.sentiment_label || 'NEUTRAL';
                 const isBull = label === 'BULLISH' || label === 'POSITIVE' || (score !== null && score > 0.15);
                 const isBear = label === 'BEARISH' || label === 'NEGATIVE' || (score !== null && score < -0.15);
                 const textColor = isBear ? 'text-rose-400' : isBull ? 'text-emerald-400' : 'text-[var(--text-secondary)]';
-                const formattedScore = score != null ? (score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2)) : '—';
+                const formattedScore = formatScore(score, 2, '—');
                 return (
                   <>
                     <div className={`text-xl sm:text-2xl font-extrabold font-mono mt-1 ${textColor}`}>

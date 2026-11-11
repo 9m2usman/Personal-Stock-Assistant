@@ -24,6 +24,38 @@ from src.backend.services.catalog_sync_service import (
     CANONICAL_EXCHANGES
 )
 
+INSTITUTIONAL_UNIVERSE: List[Dict[str, Any]] = [
+    {
+        "id": f"inst-{item['symbol'].lower().replace('.', '-')}-{item['mic'].lower()}",
+        "company_name": item["name"],
+        "display_symbol": item["symbol"],
+        "provider_symbols": {
+            "twelve_data": item["symbol"].split(".")[0],
+            "fmp": item["symbol"],
+            "alpha_vantage": item["symbol"]
+        },
+        "exchange_mic": item["mic"],
+        "exchange_name": CANONICAL_EXCHANGES.get(item["mic"], (item["mic"], item.get("country", "US"), item["curr"], ""))[0],
+        "country": item["country"],
+        "currency": item["curr"],
+        "instrument_type": item["type"],
+        "listing_type": item.get("listing", "Primary"),
+        "is_adr": item.get("is_adr", False),
+        "related_adr_symbol": item.get("related_adr_symbol"),
+        "cik": item.get("cik"),
+        "sector": item.get("sector"),
+        "industry": item.get("industry"),
+        "provider_availability": {
+            "quote": True,
+            "history": True,
+            "fundamentals": True,
+            "news": True,
+            "technicals": True
+        }
+    }
+    for item in CURATED_GLOBAL_STOCKS
+]
+
 class InstrumentService:
     """Institutional instrument search, resolution, and watchlist engine."""
 

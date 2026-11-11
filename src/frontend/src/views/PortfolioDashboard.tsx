@@ -3,6 +3,7 @@ import { Upload, PieChart, AlertTriangle, ArrowUpRight, ArrowDownRight, FileSpre
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { uploadPortfolioSpreadsheet, evaluatePortfolio } from '../api/client.ts';
 import { MetricCard } from '../components/MetricCard.tsx';
+import { formatCurrency, formatPercent, formatRatio } from '../utils/financial.ts';
 
 const COLORS = ['#10b981', '#38bdf8', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#64748b'];
 
@@ -98,23 +99,23 @@ export const PortfolioDashboard: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <MetricCard
               title="Total Portfolio Value"
-              value={`$${Number(analytics.total_market_value).toLocaleString()}`}
+              value={formatCurrency(analytics.total_market_value, 2)}
               subtitle={analytics.base_currency}
             />
             <MetricCard
               title="Unrealized P&L"
-              value={`$${Number(analytics.total_unrealized_pnl).toLocaleString()}`}
-              change={analytics.total_unrealized_pnl >= 0 ? `+$${analytics.total_unrealized_pnl}` : `-$${Math.abs(analytics.total_unrealized_pnl)}`}
+              value={formatCurrency(analytics.total_unrealized_pnl, 2)}
+              change={analytics.total_unrealized_pnl >= 0 ? `+${formatCurrency(analytics.total_unrealized_pnl, 2)}` : `-${formatCurrency(Math.abs(analytics.total_unrealized_pnl), 2)}`}
               changePercent={analytics.total_unrealized_pnl_percent}
             />
             <MetricCard
               title="Total Cost Basis"
-              value={`$${Number(analytics.total_cost_basis).toLocaleString()}`}
+              value={formatCurrency(analytics.total_cost_basis, 2)}
               subtitle="Invested Capital"
             />
             <MetricCard
               title="Herfindahl Index (HHI)"
-              value={Number(analytics.herfindahl_index).toFixed(3)}
+              value={formatRatio(analytics.herfindahl_index, 3)}
               subtitle={analytics.concentration_risk_level}
               icon={<ShieldAlert className="w-4 h-4" />}
             />
@@ -181,7 +182,7 @@ export const PortfolioDashboard: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 text-slate-300">
                     {analytics.positions.map((pos: any, idx: number) => {
-                      const isProfit = pos.unrealized_pnl >= 0;
+                      const isProfit = (pos.unrealized_pnl || 0) >= 0;
                       return (
                         <tr key={idx} className="hover:bg-slate-850/50 transition">
                           <td className="py-2.5 font-bold text-slate-100 flex items-center gap-1.5">
@@ -189,12 +190,12 @@ export const PortfolioDashboard: React.FC = () => {
                             {pos.symbol}
                           </td>
                           <td className="py-2.5 text-right">{pos.quantity}</td>
-                          <td className="py-2.5 text-right">${pos.current_price}</td>
-                          <td className="py-2.5 text-right font-semibold text-slate-100">${pos.market_value.toLocaleString()}</td>
+                          <td className="py-2.5 text-right">{formatCurrency(pos.current_price, 2)}</td>
+                          <td className="py-2.5 text-right font-semibold text-slate-100">{formatCurrency(pos.market_value, 2)}</td>
                           <td className={`py-2.5 text-right font-semibold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            {isProfit ? `+$${pos.unrealized_pnl}` : `-$${Math.abs(pos.unrealized_pnl)}`} ({pos.unrealized_pnl_percent}%)
+                            {isProfit ? `+${formatCurrency(pos.unrealized_pnl, 2)}` : `-${formatCurrency(Math.abs(pos.unrealized_pnl), 2)}`} ({formatPercent(pos.unrealized_pnl_percent, 2, true)})
                           </td>
-                          <td className="py-2.5 text-right font-bold text-slate-200">{pos.weight_percent}%</td>
+                          <td className="py-2.5 text-right font-bold text-slate-200">{formatPercent(pos.weight_percent, 2, true)}</td>
                         </tr>
                       );
                     })}

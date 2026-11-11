@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
+    PROVIDER_TIMEOUT_SECONDS: float = 3.5
 
     # Security
     SECRET_KEY: str = "insecure-dev-secret-key-change-in-production-only"

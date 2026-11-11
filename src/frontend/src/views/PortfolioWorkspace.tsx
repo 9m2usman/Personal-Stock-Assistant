@@ -31,6 +31,7 @@ import {
   simulateReallocationScenario,
   ReallocationScenarioResponse
 } from '../api/client.ts';
+import { formatCurrency, formatPercent, formatRatio, formatInteger } from '../utils/financial.ts';
 import { useTheme } from '../context/ThemeContext.tsx';
 
 const COLORS = ['#20c997', '#69a8f5', '#e9b85c', '#f06b73', '#a855f7', '#06b6d4', '#96a4b3'];
@@ -315,9 +316,7 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                 Total Market Value ({analytics.base_currency || 'USD'})
               </div>
               <div className="text-2xl font-extrabold text-[var(--text-primary)] font-mono mt-1 tabular-nums">
-                {analytics.total_market_value != null && !isNaN(Number(analytics.total_market_value))
-                  ? `$${Number(analytics.total_market_value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  : '—'}
+                {formatCurrency(analytics.total_market_value)}
               </div>
             </div>
 
@@ -334,14 +333,10 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                     : 'text-[var(--text-muted)]'
                 }`}
               >
-                {analytics.total_unrealized_pnl != null && !isNaN(Number(analytics.total_unrealized_pnl))
-                  ? `${Number(analytics.total_unrealized_pnl) >= 0 ? '+' : '-'}$${Math.abs(Number(analytics.total_unrealized_pnl)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  : '—'}
+                {formatCurrency(analytics.total_unrealized_pnl)}
               </div>
               <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
-                {analytics.total_unrealized_pnl_percent != null && !isNaN(Number(analytics.total_unrealized_pnl_percent))
-                  ? `${Number(analytics.total_unrealized_pnl_percent) >= 0 ? '+' : ''}${Number(analytics.total_unrealized_pnl_percent).toFixed(2)}% Return`
-                  : '— Return'}
+                {formatPercent(analytics.total_unrealized_pnl_percent, 2, true, '—')} Return
               </div>
             </div>
 
@@ -350,9 +345,7 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                 Herfindahl Index (HHI)
               </div>
               <div className="text-2xl font-extrabold text-emerald-400 font-mono mt-1 tabular-nums">
-                {analytics.herfindahl_index != null && !isNaN(Number(analytics.herfindahl_index))
-                  ? Number(analytics.herfindahl_index).toFixed(3)
-                  : '—'}
+                {formatRatio(analytics.herfindahl_index, 3, '—')}
               </div>
               <div className="text-[11px] font-semibold text-[var(--text-secondary)] mt-0.5">
                 {analytics.concentration_risk_level || 'EVALUATED'}
@@ -471,26 +464,26 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                         </td>
                         <td className="py-3 text-right text-[var(--text-primary)]">{pos.quantity}</td>
                         <td className="py-3 text-right text-[var(--text-muted)]">
-                          {pos.original_cost != null && !isNaN(Number(pos.original_cost)) ? `$${Number(pos.original_cost).toFixed(2)}` : '—'}
+                          {formatCurrency(pos.original_cost)}
                         </td>
                         <td className="py-3 text-right font-bold text-[var(--text-primary)]">
-                          {pos.current_price != null && !isNaN(Number(pos.current_price)) ? `$${Number(pos.current_price).toFixed(2)}` : '—'}
+                          {formatCurrency(pos.current_price)}
                         </td>
                         <td className="py-3 text-right font-bold text-[var(--text-primary)]">
-                          {pos.market_value != null && !isNaN(Number(pos.market_value)) ? `$${Number(pos.market_value).toFixed(2)}` : '—'}
+                          {formatCurrency(pos.market_value)}
                         </td>
                         <td className="py-3 text-right font-bold">
                           <span className={isPos ? 'text-emerald-400' : 'text-rose-400'}>
-                            {pos.unrealized_pnl != null && !isNaN(Number(pos.unrealized_pnl))
-                              ? `${isPos ? '+' : '-'}$${Math.abs(Number(pos.unrealized_pnl)).toFixed(2)}`
+                            {pos.unrealized_pnl != null
+                              ? `${isPos ? '+' : '-'}${formatCurrency(Math.abs(Number(pos.unrealized_pnl)))}`
                               : '—'}
-                            {pos.unrealized_pnl_percent != null && !isNaN(Number(pos.unrealized_pnl_percent))
-                              ? ` (${isPos ? '+' : ''}${Number(pos.unrealized_pnl_percent).toFixed(1)}%)`
+                            {pos.unrealized_pnl_percent != null
+                              ? ` (${formatPercent(pos.unrealized_pnl_percent, 1, true, '')})`
                               : ''}
                           </span>
                         </td>
                         <td className="py-3 text-right font-bold text-emerald-400">
-                          {pos.weight_percent != null && !isNaN(Number(pos.weight_percent)) ? `${Number(pos.weight_percent).toFixed(1)}%` : '—'}
+                          {formatPercent(pos.weight_percent, 1, true, '—')}
                         </td>
                       </tr>
                     );
@@ -615,7 +608,7 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                     >
                       {analytics.positions?.map((pos: any) => (
                         <option key={pos.symbol} value={pos.symbol}>
-                          {pos.symbol} ({pos.company_name}) · {pos.quantity} shares (~${pos.market_value?.toFixed(0)})
+                          {pos.symbol} ({pos.company_name}) · {pos.quantity} shares (~{formatCurrency(pos.market_value, 0)})
                         </option>
                       ))}
                     </select>
@@ -803,14 +796,10 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                       Portfolio NAV
                     </div>
                     <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] font-mono mt-1 tabular-nums">
-                      {reallocationResult.after_nav != null && !isNaN(Number(reallocationResult.after_nav))
-                        ? `$${Number(reallocationResult.after_nav).toFixed(2)}`
-                        : '—'}
+                      {formatCurrency(reallocationResult.after_nav)}
                     </div>
                     <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
-                      Baseline: {reallocationResult.before_nav != null && !isNaN(Number(reallocationResult.before_nav))
-                        ? `$${Number(reallocationResult.before_nav).toFixed(2)}`
-                        : '—'}
+                      Baseline: {formatCurrency(reallocationResult.before_nav)}
                     </div>
                   </div>
 
@@ -819,14 +808,10 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                       Cash Remainder
                     </div>
                     <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 font-mono mt-1 tabular-nums">
-                      {reallocationResult.after_cash != null && !isNaN(Number(reallocationResult.after_cash))
-                        ? `$${Number(reallocationResult.after_cash).toFixed(2)}`
-                        : '—'}
+                      {formatCurrency(reallocationResult.after_cash)}
                     </div>
                     <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
-                      Proceeds: {reallocationResult.total_sale_proceeds != null && !isNaN(Number(reallocationResult.total_sale_proceeds))
-                        ? `$${Number(reallocationResult.total_sale_proceeds).toFixed(2)}`
-                        : '—'}
+                      Proceeds: {formatCurrency(reallocationResult.total_sale_proceeds)}
                     </div>
                   </div>
 
@@ -835,15 +820,13 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                       Concentration (HHI)
                     </div>
                     <div className="text-xl sm:text-2xl font-extrabold text-cyan-400 font-mono mt-1 tabular-nums">
-                      {reallocationResult.after_hhi != null && !isNaN(Number(reallocationResult.after_hhi))
-                        ? Number(reallocationResult.after_hhi).toFixed(3)
-                        : '—'}
+                      {formatRatio(reallocationResult.after_hhi, 3, '—')}
                     </div>
                     <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
                       Delta:{' '}
                       <span className={reallocationResult.hhi_delta > 0 ? 'text-amber-400' : 'text-emerald-400'}>
-                        {reallocationResult.hhi_delta != null && !isNaN(Number(reallocationResult.hhi_delta))
-                          ? `${Number(reallocationResult.hhi_delta) >= 0 ? '+' : ''}${Number(reallocationResult.hhi_delta).toFixed(3)}`
+                        {reallocationResult.hhi_delta != null
+                          ? `${Number(reallocationResult.hhi_delta) >= 0 ? '+' : ''}${formatRatio(reallocationResult.hhi_delta, 3)}`
                           : '—'}
                       </span>
                     </div>
@@ -854,9 +837,7 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                       Deployed Capital
                     </div>
                     <div className="text-xl sm:text-2xl font-extrabold text-purple-400 font-mono mt-1 tabular-nums">
-                      {reallocationResult.total_purchase_cost != null && !isNaN(Number(reallocationResult.total_purchase_cost))
-                        ? `$${Number(reallocationResult.total_purchase_cost).toFixed(2)}`
-                        : '—'}
+                      {formatCurrency(reallocationResult.total_purchase_cost)}
                     </div>
                     <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
                       {reallocationResult.transactions?.length || 0} simulated orders
@@ -904,18 +885,18 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                               <td className="py-2.5 font-bold text-[var(--text-primary)]">{t.symbol}</td>
                               <td className="py-2.5 text-[var(--text-secondary)]">{t.company_name}</td>
                               <td className="py-2.5 text-right font-semibold text-[var(--text-primary)]">
-                                {t.shares != null && !isNaN(Number(t.shares)) ? Number(t.shares).toFixed(4) : '—'}
+                                {formatRatio(t.shares, 4, '—')}
                               </td>
                               <td className="py-2.5 text-right text-[var(--text-muted)]">
-                                {t.price != null && !isNaN(Number(t.price)) ? `$${Number(t.price).toFixed(2)}` : '—'}
+                                {formatCurrency(t.price)}
                               </td>
                               <td
                                 className={`py-2.5 text-right font-extrabold ${
                                   isSell ? 'text-emerald-400' : 'text-purple-400'
                                 }`}
                               >
-                                {t.total_amount != null && !isNaN(Number(t.total_amount))
-                                  ? `${isSell ? '+' : '-'}$${Math.abs(Number(t.total_amount)).toFixed(2)}`
+                                {t.total_amount != null
+                                  ? `${isSell ? '+' : '-'}${formatCurrency(Math.abs(Number(t.total_amount)))}`
                                   : '—'}
                               </td>
                             </tr>
@@ -950,16 +931,16 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                             <td className="py-2.5 font-bold text-emerald-400">{p.symbol}</td>
                             <td className="py-2.5 text-[var(--text-secondary)]">{p.company_name}</td>
                             <td className="py-2.5 text-right text-[var(--text-primary)]">
-                              {p.quantity != null && !isNaN(Number(p.quantity)) ? Number(p.quantity).toFixed(4) : '—'}
+                              {formatRatio(p.quantity, 4, '—')}
                             </td>
                             <td className="py-2.5 text-right text-[var(--text-muted)]">
-                              {p.market_price != null && !isNaN(Number(p.market_price)) ? `$${Number(p.market_price).toFixed(2)}` : '—'}
+                              {formatCurrency(p.market_price)}
                             </td>
                             <td className="py-2.5 text-right font-bold text-[var(--text-primary)]">
-                              {p.market_value != null && !isNaN(Number(p.market_value)) ? `$${Number(p.market_value).toFixed(2)}` : '—'}
+                              {formatCurrency(p.market_value)}
                             </td>
                             <td className="py-2.5 text-right font-extrabold text-emerald-400">
-                              {p.weight_percent != null && !isNaN(Number(p.weight_percent)) ? `${Number(p.weight_percent).toFixed(2)}%` : '—'}
+                              {formatPercent(p.weight_percent, 2, true, '—')}
                             </td>
                           </tr>
                         ))}

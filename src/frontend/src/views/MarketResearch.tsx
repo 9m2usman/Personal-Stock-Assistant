@@ -3,6 +3,12 @@ import { Search, Building2, DollarSign, BarChart3, FileText, CheckCircle2, Globe
 import { fetchFundamentals, fetchQuote } from '../api/client.ts';
 import { MetricCard } from '../components/MetricCard.tsx';
 import { GlobalMarketGlobe3D } from '../components/GlobalMarketGlobe3D.tsx';
+import {
+  formatRatio,
+  formatPercent,
+  formatCurrency,
+  formatBillions
+} from '../utils/financial.ts';
 
 interface MarketResearchProps {
   initialSymbol?: string;
@@ -73,6 +79,15 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
   const income = data?.latest_income_statement;
   const balance = data?.latest_balance_sheet;
   const cashflow = data?.latest_cash_flow;
+
+  const getMetric = (stmt: any, keys: string[]) => {
+    if (!stmt) return null;
+    const m = stmt.metrics || stmt;
+    for (const k of keys) {
+      if (m[k] !== undefined && m[k] !== null) return m[k];
+    }
+    return null;
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -164,32 +179,32 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <MetricCard
               title="P/E Ratio"
-              value={ratios.pe_ratio ?? 'N/A'}
+              value={formatRatio(ratios.pe_ratio, 2, 'N/A')}
               subtitle="TTM Valuation"
             />
             <MetricCard
               title="Gross Margin"
-              value={ratios.gross_margin_percent ? `${ratios.gross_margin_percent}%` : 'N/A'}
+              value={formatPercent(ratios.gross_margin_percent ?? ratios.gross_margin, 2, true, 'N/A')}
               subtitle="Profitability"
             />
             <MetricCard
               title="Net Margin"
-              value={ratios.net_margin_percent ? `${ratios.net_margin_percent}%` : 'N/A'}
+              value={formatPercent(ratios.net_margin_percent ?? ratios.net_margin, 2, true, 'N/A')}
               subtitle="Net Conversion"
             />
             <MetricCard
               title="Return on Equity"
-              value={ratios.return_on_equity_percent ? `${ratios.return_on_equity_percent}%` : 'N/A'}
+              value={formatPercent(ratios.return_on_equity_percent ?? ratios.roe, 2, true, 'N/A')}
               subtitle="ROE"
             />
             <MetricCard
               title="Debt to Equity"
-              value={ratios.debt_to_equity_ratio ?? 'N/A'}
+              value={formatRatio(ratios.debt_to_equity_ratio ?? ratios.debt_to_equity, 2, 'N/A')}
               subtitle="Leverage"
             />
             <MetricCard
               title="Free Cash Flow"
-              value={ratios.free_cash_flow ? `$${(ratios.free_cash_flow / 1e9).toFixed(1)}B` : 'N/A'}
+              value={formatBillions(ratios.free_cash_flow, 1, '$', 'B', 'N/A')}
               subtitle="FCF Generated"
             />
           </div>
@@ -225,7 +240,7 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
                   <thead className="text-slate-400 border-b border-slate-800">
                     <tr>
                       <th className="py-2">Metric</th>
-                      <th className="py-2 text-right">Fiscal Year {income.fiscal_year}</th>
+                      <th className="py-2 text-right">Fiscal Year {income.fiscal_year || '—'}</th>
                       <th className="py-2 text-right">Reported Currency</th>
                       <th className="py-2 text-right">Filing Date</th>
                     </tr>
@@ -234,34 +249,34 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
                     <tr>
                       <td className="py-2 font-medium">Total Revenue</td>
                       <td className="py-2 text-right font-semibold text-emerald-400">
-                        ${Number(income.metrics?.revenue || 0).toLocaleString()}
+                        {formatBillions(getMetric(income, ['revenue', 'total_revenue', 'Revenues']))}
                       </td>
-                      <td className="py-2 text-right">{income.reported_currency}</td>
-                      <td className="py-2 text-right">{income.filing_date}</td>
+                      <td className="py-2 text-right">{income.reported_currency || 'USD'}</td>
+                      <td className="py-2 text-right">{income.filing_date || '—'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 font-medium">Gross Profit</td>
                       <td className="py-2 text-right font-semibold">
-                        ${Number(income.metrics?.grossProfit || 0).toLocaleString()}
+                        {formatBillions(getMetric(income, ['grossProfit', 'gross_profit', 'GrossProfit']))}
                       </td>
-                      <td className="py-2 text-right">{income.reported_currency}</td>
-                      <td className="py-2 text-right">{income.filing_date}</td>
+                      <td className="py-2 text-right">{income.reported_currency || 'USD'}</td>
+                      <td className="py-2 text-right">{income.filing_date || '—'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 font-medium">Net Income</td>
                       <td className="py-2 text-right font-semibold text-emerald-400">
-                        ${Number(income.metrics?.netIncome || 0).toLocaleString()}
+                        {formatBillions(getMetric(income, ['netIncome', 'net_income', 'NetIncomeLoss']))}
                       </td>
-                      <td className="py-2 text-right">{income.reported_currency}</td>
-                      <td className="py-2 text-right">{income.filing_date}</td>
+                      <td className="py-2 text-right">{income.reported_currency || 'USD'}</td>
+                      <td className="py-2 text-right">{income.filing_date || '—'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 font-medium">Diluted EPS</td>
                       <td className="py-2 text-right font-semibold">
-                        ${Number(income.metrics?.eps || 0).toFixed(2)}
+                        {formatRatio(getMetric(income, ['eps', 'eps_diluted', 'diluted_eps', 'EarningsPerShareDiluted']), 2)}
                       </td>
-                      <td className="py-2 text-right">{income.reported_currency}</td>
-                      <td className="py-2 text-right">{income.filing_date}</td>
+                      <td className="py-2 text-right">{income.reported_currency || 'USD'}</td>
+                      <td className="py-2 text-right">{income.filing_date || '—'}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -280,23 +295,23 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
                     <tr>
                       <td className="py-2 font-medium">Total Assets</td>
                       <td className="py-2 text-right font-semibold text-emerald-400">
-                        ${Number(balance.metrics?.totalAssets || 0).toLocaleString()}
+                        {formatBillions(getMetric(balance, ['totalAssets', 'total_assets', 'Assets']))}
                       </td>
-                      <td className="py-2 text-right">{balance.filing_date}</td>
+                      <td className="py-2 text-right">{balance.filing_date || '—'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 font-medium">Total Stockholder Equity</td>
                       <td className="py-2 text-right font-semibold">
-                        ${Number(balance.metrics?.totalStockholdersEquity || 0).toLocaleString()}
+                        {formatBillions(getMetric(balance, ['totalStockholdersEquity', 'stockholders_equity', 'StockholdersEquity']))}
                       </td>
-                      <td className="py-2 text-right">{balance.filing_date}</td>
+                      <td className="py-2 text-right">{balance.filing_date || '—'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 font-medium">Total Debt</td>
                       <td className="py-2 text-right font-semibold text-rose-400">
-                        ${Number(balance.metrics?.totalDebt || 0).toLocaleString()}
+                        {formatBillions(getMetric(balance, ['totalDebt', 'total_debt', 'DebtInstrumentCarryingAmount', 'LongTermDebt']))}
                       </td>
-                      <td className="py-2 text-right">{balance.filing_date}</td>
+                      <td className="py-2 text-right">{balance.filing_date || '—'}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -315,23 +330,23 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
                     <tr>
                       <td className="py-2 font-medium">Operating Cash Flow</td>
                       <td className="py-2 text-right font-semibold text-emerald-400">
-                        ${Number(cashflow.metrics?.netCashProvidedByOperatingActivities || 0).toLocaleString()}
+                        {formatBillions(getMetric(cashflow, ['netCashProvidedByOperatingActivities', 'operating_cash_flow', 'NetCashProvidedByUsedInOperatingActivities']))}
                       </td>
-                      <td className="py-2 text-right">{cashflow.filing_date}</td>
+                      <td className="py-2 text-right">{cashflow.filing_date || '—'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 font-medium">Capital Expenditure</td>
                       <td className="py-2 text-right font-semibold text-rose-400">
-                        ${Number(cashflow.metrics?.capitalExpenditure || 0).toLocaleString()}
+                        {formatBillions(getMetric(cashflow, ['capitalExpenditure', 'capital_expenditure', 'PaymentsToAcquirePropertyPlantAndEquipment']))}
                       </td>
-                      <td className="py-2 text-right">{cashflow.filing_date}</td>
+                      <td className="py-2 text-right">{cashflow.filing_date || '—'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 font-medium">Free Cash Flow</td>
                       <td className="py-2 text-right font-semibold text-emerald-400">
-                        ${Number(cashflow.metrics?.freeCashFlow || 0).toLocaleString()}
+                        {formatBillions(getMetric(cashflow, ['freeCashFlow', 'free_cash_flow']))}
                       </td>
-                      <td className="py-2 text-right">{cashflow.filing_date}</td>
+                      <td className="py-2 text-right">{cashflow.filing_date || '—'}</td>
                     </tr>
                   </tbody>
                 </table>
