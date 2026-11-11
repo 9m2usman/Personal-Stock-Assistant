@@ -134,3 +134,20 @@ For full infrastructure-as-code and architectural blueprints covering **AWS ECS 
 
 ## License & Compliance
 This software is developed strictly for research, quantitative analysis, and educational purposes. All data providers operate under their respective licensing terms and fair-access limits.
+
+
+# running ...
+
+# Option 1: One-Click Docker Launch (Recommended)
+bash
+docker compose up --build
+Web UI: http://localhost:3000
+FastAPI Documentation: http://localhost:8000/docs
+
+# Option 2: Local Developer Launch
+powershell
+# Launch backend
+uvicorn src.backend.main:app --reload --port 8000
+# In a second terminal, launch frontend
+cd src/frontend
+npm run dev
