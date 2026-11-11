@@ -19,6 +19,8 @@ env/
 
 # Node
 node_modules/
+dist/
+.pytest_cache/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
