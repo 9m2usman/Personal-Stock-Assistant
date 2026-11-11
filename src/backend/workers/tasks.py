@@ -25,6 +25,35 @@ def _run_async(coro):
         return loop.run_until_complete(coro)
     return loop.run_until_complete(coro)
 
+@celery_app.task(bind=True, name="tasks.ping_system")
+def ping_system(self, payload: str = "ping") -> Dict[str, Any]:
+    """Test verification task verifying Redis message queue and worker execution."""
+    logger.info("Executing Celery ping_system test task (ID: %s, payload: %s)", self.request.id, payload)
+    return {
+        "task_id": self.request.id,
+        "echo": payload,
+        "status": "SUCCESS",
+        "worker_verified": True
+    }
+
+@celery_app.task(bind=True, name="tasks.sync_catalog_task")
+def sync_catalog_task(self, source: str = "curated") -> Dict[str, Any]:
+    """Background task to synchronize global stock catalog from SEC EDGAR or curated universe."""
+    logger.info("Starting background catalog synchronization from source: %s", source)
+    from src.backend.services.catalog_sync_service import catalog_sync_service
+    if source == "sec_edgar":
+        count = _run_async(catalog_sync_service.sync_sec_edgar_tickers(max_records=2500))
+    else:
+        count = _run_async(catalog_sync_service.sync_curated_universe())
+    stats = _run_async(catalog_sync_service.get_catalogue_statistics())
+    return {
+        "task_id": self.request.id,
+        "source": source,
+        "ingested_count": count,
+        "stats": stats,
+        "status": "COMPLETED"
+    }
+
 @celery_app.task(bind=True, name="tasks.generate_deep_research_report")
 def generate_deep_research_report(self, symbol: str) -> Dict[str, Any]:
     """Compiles a comprehensive institutional research report for an equity."""

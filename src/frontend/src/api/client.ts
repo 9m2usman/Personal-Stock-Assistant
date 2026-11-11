@@ -172,3 +172,146 @@ export async function fetchWorkerHealth(): Promise<any> {
   return res.json();
 }
 
+export interface PaginatedInstrumentsResponse {
+  items: NormalizedInstrument[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface CatalogueStatistics {
+  total_instruments: number;
+  total_exchanges: number;
+  primary_listings: number;
+  adr_listings: number;
+  active_instruments: number;
+  us_instruments: number;
+  international_instruments: number;
+  timestamp_utc: string;
+}
+
+export interface ReallocationScenarioRequest {
+  holdings: Array<{
+    symbol: string;
+    quantity: number;
+    average_cost: number;
+    currency?: string;
+  }>;
+  sells?: Array<{
+    symbol: string;
+    sell_all?: boolean;
+    quantity?: number;
+    percent?: number;
+  }>;
+  buys?: Array<{
+    symbol: string;
+    allocation_percent?: number;
+    target_amount?: number;
+    target_shares?: number;
+  }>;
+  capital_injection?: number;
+  natural_language_prompt?: string;
+  base_currency?: string;
+}
+
+export interface ReallocationScenarioResponse {
+  before_nav: number;
+  after_nav: number;
+  nav_change: number;
+  nav_change_percent: number;
+  before_cash: number;
+  after_cash: number;
+  total_sale_proceeds: number;
+  total_purchase_cost: number;
+  transactions: Array<{
+    action: string;
+    symbol: string;
+    company_name: string;
+    shares: number;
+    price: number;
+    total_amount: number;
+    currency: string;
+  }>;
+  current_positions: Array<{
+    symbol: string;
+    company_name: string;
+    quantity: number;
+    market_price: number;
+    market_value: number;
+    weight_percent: number;
+    currency: string;
+    sector?: string;
+  }>;
+  hypothetical_positions: Array<{
+    symbol: string;
+    company_name: string;
+    quantity: number;
+    market_price: number;
+    market_value: number;
+    weight_percent: number;
+    currency: string;
+    sector?: string;
+  }>;
+  before_hhi: number;
+  after_hhi: number;
+  hhi_delta: number;
+  before_sector_allocation: Record<string, number>;
+  after_sector_allocation: Record<string, number>;
+  risk_observations: string[];
+  assumptions: string[];
+  timestamp_utc: string;
+}
+
+export async function fetchPaginatedInstruments(params: {
+  query?: string;
+  exchange?: string;
+  country?: string;
+  asset_type?: string;
+  sector?: string;
+  page?: number;
+  page_size?: number;
+}): Promise<PaginatedInstrumentsResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.query) searchParams.append('query', params.query);
+  if (params.exchange && params.exchange !== 'ALL') searchParams.append('exchange', params.exchange);
+  if (params.country && params.country !== 'ALL') searchParams.append('country', params.country);
+  if (params.asset_type && params.asset_type !== 'ALL') searchParams.append('asset_type', params.asset_type);
+  if (params.sector && params.sector !== 'ALL') searchParams.append('sector', params.sector);
+  searchParams.append('page', String(params.page || 1));
+  searchParams.append('page_size', String(params.page_size || 20));
+
+  const res = await fetch(`${BASE_URL}/market/instruments/paginated?${searchParams.toString()}`);
+  if (!res.ok) throw new Error(`Paginated instruments error: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchCatalogStats(): Promise<CatalogueStatistics> {
+  const res = await fetch(`${BASE_URL}/market/instruments/stats`);
+  if (!res.ok) throw new Error(`Catalog stats error: ${res.statusText}`);
+  return res.json();
+}
+
+export async function triggerCatalogSync(source: 'curated' | 'sec_edgar' = 'curated'): Promise<any> {
+  const res = await fetch(`${BASE_URL}/market/instruments/sync?source=${encodeURIComponent(source)}`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error(`Catalog sync error: ${res.statusText}`);
+  return res.json();
+}
+
+export async function simulateReallocationScenario(
+  payload: ReallocationScenarioRequest
+): Promise<ReallocationScenarioResponse> {
+  const res = await fetch(`${BASE_URL}/portfolio/scenario/reallocate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody.detail || `Reallocation error: ${res.statusText}`);
+  }
+  return res.json();
+}
+

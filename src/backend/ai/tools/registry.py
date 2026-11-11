@@ -4,6 +4,8 @@ Exposes typed, schema-validated financial tools to the AI Agent Harness.
 """
 from typing import Dict, Any, List, Optional, Callable
 from decimal import Decimal
+from datetime import datetime, timezone
+import asyncio
 from pydantic import BaseModel, Field
 from src.backend.services.market_service import market_service
 from src.backend.services.fundamental_service import fundamental_service
@@ -302,6 +304,63 @@ class ToolRegistry:
             handler=self._tool_get_analysis_job_status
         )
 
+        # 14. Multi-Stock Comparison Tool
+        self.register(
+            name="compare_stocks",
+            description="Performs an institutional side-by-side comparison of two or more equities across valuation ratios, margins, technical indicators, and news sentiment.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "symbol_a": {"type": "string", "description": "First ticker symbol (e.g. NVDA)"},
+                    "symbol_b": {"type": "string", "description": "Second ticker symbol (e.g. AMD)"}
+                },
+                "required": ["symbol_a", "symbol_b"]
+            },
+            handler=self._tool_compare_stocks
+        )
+
+        # 15. Buy/Sell Portfolio Reallocation Scenario Simulator Tool
+        self.register(
+            name="simulate_portfolio_reallocation",
+            description="Calculates the hypothetical mathematical outcome of selling existing holdings and buying target equities with proceeds.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "sells": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "symbol": {"type": "string"},
+                                "sell_all": {"type": "boolean", "default": True},
+                                "percent": {"type": "number"},
+                                "quantity": {"type": "number"}
+                            },
+                            "required": ["symbol"]
+                        },
+                        "description": "List of sell orders"
+                    },
+                    "buys": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "symbol": {"type": "string"},
+                                "allocation_percent": {"type": "number"},
+                                "target_amount": {"type": "number"},
+                                "target_shares": {"type": "number"}
+                            },
+                            "required": ["symbol"]
+                        },
+                        "description": "List of target purchases"
+                    },
+                    "capital_injection": {"type": "number", "default": 0.0, "description": "Additional cash injected"}
+                },
+                "required": ["sells", "buys"]
+            },
+            handler=self._tool_simulate_portfolio_reallocation
+        )
+
     # Handlers
     async def _tool_search_instruments(self, query: str, exchange: Optional[str] = None, limit: int = 10) -> Dict[str, Any]:
         results = await instrument_service.search(query=query, exchange=exchange, limit=limit)
@@ -381,6 +440,59 @@ class ToolRegistry:
             "ready": ready,
             "result": result if not isinstance(result, Exception) else str(result)
         }
+
+    async def _tool_compare_stocks(self, symbol_a: str, symbol_b: str) -> Dict[str, Any]:
+        sym_a = symbol_a.strip().upper()
+        sym_b = symbol_b.strip().upper()
+
+        async def _fetch_equity_profile(sym: str) -> Dict[str, Any]:
+            quote = await market_service.get_realtime_quote(sym)
+            fund = await fundamental_service.get_fundamentals(sym)
+            tech = await market_service.get_technicals(sym, limit=100)
+            sentiment = await self.news_service.get_company_sentiment(sym, limit=5)
+            return {
+                "symbol": sym,
+                "quote": quote.model_dump(mode="json"),
+                "profile": fund.profile.model_dump(mode="json"),
+                "ratios": fund.ratios.model_dump(mode="json"),
+                "technicals": tech.latest_indicators.model_dump(mode="json") if hasattr(tech.latest_indicators, "model_dump") else (tech.latest_indicators or {}),
+                "sentiment": sentiment.model_dump(mode="json")
+            }
+
+        data_a, data_b = await asyncio.gather(_fetch_equity_profile(sym_a), _fetch_equity_profile(sym_b))
+        return {
+            "symbol_a": data_a,
+            "symbol_b": data_b,
+            "as_of": datetime.now(timezone.utc).isoformat()
+        }
+
+    async def _tool_simulate_portfolio_reallocation(
+        self,
+        sells: List[Dict[str, Any]],
+        buys: List[Dict[str, Any]],
+        capital_injection: float = 0.0
+    ) -> Dict[str, Any]:
+        from src.backend.services.scenario_service import scenario_engine, SellOrder, BuyOrder
+
+        # Build baseline portfolio (from active storage or standard institutional test portfolio)
+        default_holdings = [
+            RawHoldingInput(symbol="TSLA", quantity=50, average_cost=210.0, currency="USD"),
+            RawHoldingInput(symbol="AAPL", quantity=100, average_cost=175.0, currency="USD"),
+            RawHoldingInput(symbol="MSFT", quantity=40, average_cost=380.0, currency="USD"),
+            RawHoldingInput(symbol="AMZN", quantity=60, average_cost=170.0, currency="USD")
+        ]
+        analytics = await self.portfolio_service.evaluate_portfolio(default_holdings)
+
+        sell_objs = [SellOrder(**s) for s in sells]
+        buy_objs = [BuyOrder(**b) for b in buys]
+
+        res = await scenario_engine.execute_reallocation_scenario(
+            current_analytics=analytics,
+            sells=sell_objs,
+            buys=buy_objs,
+            capital_injection=capital_injection
+        )
+        return res.model_dump(mode="json")
 
     async def execute(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
         if tool_name not in self.tools:

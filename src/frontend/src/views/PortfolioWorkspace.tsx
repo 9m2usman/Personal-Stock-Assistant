@@ -14,10 +14,23 @@ import {
   Sparkles,
   RefreshCw,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  ArrowRightLeft,
+  DollarSign,
+  Plus,
+  Trash2,
+  HelpCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
-import { uploadPortfolioSpreadsheet, evaluatePortfolio, simulateWhatIf, sendChatMessage } from '../api/client.ts';
+import {
+  uploadPortfolioSpreadsheet,
+  evaluatePortfolio,
+  simulateWhatIf,
+  sendChatMessage,
+  simulateReallocationScenario,
+  ReallocationScenarioResponse
+} from '../api/client.ts';
 import { useTheme } from '../context/ThemeContext.tsx';
 
 const COLORS = ['#20c997', '#69a8f5', '#e9b85c', '#f06b73', '#a855f7', '#06b6d4', '#96a4b3'];
@@ -64,6 +77,19 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
   const [shockPercent, setShockPercent] = useState<number>(-10);
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [simulating, setSimulating] = useState(false);
+
+  // Buy/Sell Scenario Simulator State
+  const [selectedSellSymbol, setSelectedSellSymbol] = useState<string>('TSLA');
+  const [sellPortion, setSellPortion] = useState<'ALL' | '50' | 'CUSTOM'>('ALL');
+  const [sellCustomQty, setSellCustomQty] = useState<number>(10);
+  const [targetBuys, setTargetBuys] = useState<Array<{ symbol: string; percent: number }>>([
+    { symbol: 'NVDA', percent: 60 },
+    { symbol: 'AMD', percent: 40 },
+  ]);
+  const [nlScenarioPrompt, setNlScenarioPrompt] = useState<string>('');
+  const [reallocationResult, setReallocationResult] = useState<ReallocationScenarioResponse | null>(null);
+  const [executingScenario, setExecutingScenario] = useState<boolean>(false);
+  const [scenarioError, setScenarioError] = useState<string | null>(null);
 
   // AI Review State
   const [aiReview, setAiReview] = useState<string | null>(null);
@@ -149,6 +175,60 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
       console.error(err);
     } finally {
       setSimulating(false);
+    }
+  };
+
+  const handleExecuteScenario = async (useNl: boolean = false) => {
+    if (!analytics || !analytics.positions || analytics.positions.length === 0) {
+      setScenarioError('Please load or import a portfolio first.');
+      return;
+    }
+    setExecutingScenario(true);
+    setScenarioError(null);
+    try {
+      const rawHoldings = analytics.positions.map((p: any) => ({
+        symbol: p.symbol,
+        quantity: p.quantity,
+        average_cost: p.original_cost,
+        currency: p.reported_currency,
+      }));
+
+      const payload: any = {
+        holdings: rawHoldings,
+        base_currency: 'USD',
+      };
+
+      if (useNl && nlScenarioPrompt.trim()) {
+        payload.natural_language_prompt = nlScenarioPrompt.trim();
+      } else {
+        const sellOrder: any = { symbol: selectedSellSymbol };
+        if (sellPortion === 'ALL') {
+          sellOrder.sell_all = true;
+        } else if (sellPortion === '50') {
+          sellOrder.sell_all = false;
+          sellOrder.percent = 50.0;
+        } else {
+          sellOrder.sell_all = false;
+          sellOrder.quantity = sellCustomQty;
+        }
+
+        const buyOrders = targetBuys
+          .filter((b) => b.symbol.trim() && b.percent > 0)
+          .map((b) => ({
+            symbol: b.symbol.toUpperCase().trim(),
+            allocation_percent: b.percent,
+          }));
+
+        payload.sells = [sellOrder];
+        payload.buys = buyOrders;
+      }
+
+      const res = await simulateReallocationScenario(payload);
+      setReallocationResult(res);
+    } catch (err: any) {
+      setScenarioError(err.message || 'Scenario execution failed');
+    } finally {
+      setExecutingScenario(false);
     }
   };
 
@@ -458,6 +538,412 @@ export const PortfolioWorkspace: React.FC<{ onNavigateToAssistant?: () => void }
                   <div className="text-[10px] text-[var(--text-muted)] uppercase font-bold">Post-Shock HHI</div>
                   <div className="text-lg font-bold text-emerald-400 mt-1">
                     {simulationResult.simulated_hhi?.toFixed(3)}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Institutional Buy/Sell Scenario Simulator Panel */}
+          <div className="p-6 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Decision Support Simulator
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-base font-extrabold text-[var(--text-primary)] mt-1 flex items-center gap-2">
+                  <ArrowRightLeft className="w-5 h-5 text-emerald-400" />
+                  Hypothetical Buy/Sell Reallocation Engine
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Simulate selling an existing holding at live market price and redeploying proceeds across high-conviction target assets.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)]">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Zero Execution Risk · Pure Simulation</span>
+              </div>
+            </div>
+
+            {scenarioError && (
+              <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-400 text-xs">
+                {scenarioError}
+              </div>
+            )}
+
+            {/* Natural Language Prompt or Structured Mode */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column: Structured Order Configurator */}
+              <div className="space-y-4 p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+                <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                  1. Liquidate Holding (Sell Leg)
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] text-[var(--text-muted)] block mb-1">
+                      Select Current Position to Sell:
+                    </label>
+                    <select
+                      value={selectedSellSymbol}
+                      onChange={(e) => setSelectedSellSymbol(e.target.value)}
+                      aria-label="Select holding to sell"
+                      className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500"
+                    >
+                      {analytics.positions?.map((pos: any) => (
+                        <option key={pos.symbol} value={pos.symbol}>
+                          {pos.symbol} ({pos.company_name}) · {pos.quantity} shares (~${pos.market_value?.toFixed(0)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] text-[var(--text-muted)] block mb-1">
+                      Sale Quantity / Portion:
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSellPortion('ALL')}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition font-mono ${
+                          sellPortion === 'ALL'
+                            ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold'
+                            : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        100% (Entire Holding)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSellPortion('50')}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition font-mono ${
+                          sellPortion === '50'
+                            ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold'
+                            : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        50% (Half)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSellPortion('CUSTOM')}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition font-mono ${
+                          sellPortion === 'CUSTOM'
+                            ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold'
+                            : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        Custom Shares
+                      </button>
+                    </div>
+
+                    {sellPortion === 'CUSTOM' && (
+                      <div className="mt-2">
+                        <input
+                          type="number"
+                          value={sellCustomQty}
+                          onChange={(e) => setSellCustomQty(Number(e.target.value))}
+                          placeholder="Number of shares to sell"
+                          className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-1.5 text-xs font-mono text-[var(--text-primary)]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  2. Deploy Proceeds (Buy Legs)
+                </div>
+
+                <div className="space-y-2">
+                  {targetBuys.map((buy, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={buy.symbol}
+                        onChange={(e) => {
+                          const updated = [...targetBuys];
+                          updated[idx].symbol = e.target.value.toUpperCase();
+                          setTargetBuys(updated);
+                        }}
+                        placeholder="Target Ticker (e.g. NVDA)"
+                        className="w-28 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-[var(--text-primary)]"
+                      />
+                      <div className="flex items-center gap-1 flex-1">
+                        <input
+                          type="number"
+                          value={buy.percent}
+                          onChange={(e) => {
+                            const updated = [...targetBuys];
+                            updated[idx].percent = Number(e.target.value);
+                            setTargetBuys(updated);
+                          }}
+                          placeholder="% Allocation"
+                          className="w-20 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono text-[var(--text-primary)]"
+                        />
+                        <span className="text-xs font-mono text-[var(--text-muted)]">%</span>
+                      </div>
+                      {targetBuys.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setTargetBuys(targetBuys.filter((_, i) => i !== idx))}
+                          className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Remove Leg"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setTargetBuys([...targetBuys, { symbol: '', percent: 0 }])}
+                    className="text-[11px] font-bold text-emerald-400 hover:underline flex items-center gap-1 pt-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Another Target Stock
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleExecuteScenario(false)}
+                  disabled={executingScenario}
+                  className="w-full mt-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-extrabold text-xs transition shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2"
+                >
+                  <ArrowRightLeft className={`w-4 h-4 ${executingScenario ? 'animate-spin' : ''}`} />
+                  {executingScenario ? 'Calculating Reallocation...' : 'Execute Structured Reallocation'}
+                </button>
+              </div>
+
+              {/* Right Column: Natural Language AI Scenario Parser */}
+              <div className="space-y-4 p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] flex flex-col justify-between">
+                <div>
+                  <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    Natural Language Reallocation
+                  </div>
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-1">
+                    Describe any hypothetical reallocation in plain English. The AI agent will parse sell orders, buy splits, and execute calculations automatically.
+                  </p>
+
+                  <div className="mt-3">
+                    <textarea
+                      rows={4}
+                      value={nlScenarioPrompt}
+                      onChange={(e) => setNlScenarioPrompt(e.target.value)}
+                      placeholder="e.g. If I sell my Tesla holdings and invest 60% in NVIDIA and 40% in AMD, what happens to my portfolio?"
+                      className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-3 text-xs text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 font-mono transition"
+                    />
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="text-[10px] text-[var(--text-muted)]">Examples:</span>
+                    <button
+                      type="button"
+                      onClick={() => setNlScenarioPrompt('If I sell my Tesla holdings and invest 60% in NVIDIA and 40% in AMD')}
+                      className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg-secondary)] hover:text-emerald-400 text-[var(--text-secondary)] border border-[var(--border-subtle)] transition"
+                    >
+                      Sell TSLA ➔ 60% NVDA / 40% AMD
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNlScenarioPrompt('Sell Apple and reallocate 100% into Microsoft')}
+                      className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg-secondary)] hover:text-emerald-400 text-[var(--text-secondary)] border border-[var(--border-subtle)] transition"
+                    >
+                      Sell AAPL ➔ 100% MSFT
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleExecuteScenario(true)}
+                  disabled={executingScenario || !nlScenarioPrompt.trim()}
+                  className="w-full py-2.5 rounded-xl bg-[var(--bg-elevated)] hover:bg-emerald-500 hover:text-slate-950 border border-emerald-500/40 text-emerald-400 font-extrabold text-xs transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-40"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {executingScenario ? 'Parsing & Simulating...' : 'Parse & Simulate Natural Language'}
+                </button>
+              </div>
+            </div>
+
+            {/* Simulation Results Output */}
+            {reallocationResult && (
+              <div className="space-y-6 pt-4 border-t border-[var(--border-subtle)] animate-fade-in">
+                {/* Before vs After Metric Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+                    <div className="text-[10px] font-mono font-bold uppercase text-[var(--text-muted)]">
+                      Portfolio NAV
+                    </div>
+                    <div className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] font-mono mt-1 tabular-nums">
+                      ${reallocationResult.after_nav?.toFixed(2)}
+                    </div>
+                    <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
+                      Baseline: ${reallocationResult.before_nav?.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+                    <div className="text-[10px] font-mono font-bold uppercase text-[var(--text-muted)]">
+                      Cash Remainder
+                    </div>
+                    <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 font-mono mt-1 tabular-nums">
+                      ${reallocationResult.after_cash?.toFixed(2)}
+                    </div>
+                    <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
+                      Proceeds: ${reallocationResult.total_sale_proceeds?.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+                    <div className="text-[10px] font-mono font-bold uppercase text-[var(--text-muted)]">
+                      Concentration (HHI)
+                    </div>
+                    <div className="text-xl sm:text-2xl font-extrabold text-cyan-400 font-mono mt-1 tabular-nums">
+                      {reallocationResult.after_hhi?.toFixed(3)}
+                    </div>
+                    <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
+                      Delta:{' '}
+                      <span className={reallocationResult.hhi_delta > 0 ? 'text-amber-400' : 'text-emerald-400'}>
+                        {reallocationResult.hhi_delta >= 0 ? '+' : ''}
+                        {reallocationResult.hhi_delta?.toFixed(3)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+                    <div className="text-[10px] font-mono font-bold uppercase text-[var(--text-muted)]">
+                      Deployed Capital
+                    </div>
+                    <div className="text-xl sm:text-2xl font-extrabold text-purple-400 font-mono mt-1 tabular-nums">
+                      ${reallocationResult.total_purchase_cost?.toFixed(2)}
+                    </div>
+                    <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
+                      {reallocationResult.transactions?.length || 0} simulated orders
+                    </div>
+                  </div>
+                </div>
+
+                {/* Simulated Order Execution Receipts */}
+                <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] space-y-3">
+                  <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center justify-between">
+                    <span>Simulated Transaction Execution Breakdown</span>
+                    <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                      Timestamp: {reallocationResult.timestamp_utc}
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left font-mono">
+                      <thead>
+                        <tr className="border-b border-[var(--border-color)] text-[var(--text-muted)] text-[11px]">
+                          <th className="pb-2">Action</th>
+                          <th className="pb-2">Symbol</th>
+                          <th className="pb-2">Asset Name</th>
+                          <th className="pb-2 text-right">Shares</th>
+                          <th className="pb-2 text-right">Valuation Price</th>
+                          <th className="pb-2 text-right">Total Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border-subtle)] tabular-nums">
+                        {reallocationResult.transactions?.map((t, idx) => {
+                          const isSell = t.action === 'SELL';
+                          return (
+                            <tr key={idx} className="hover:bg-[var(--bg-secondary)]/50 transition">
+                              <td className="py-2.5">
+                                <span
+                                  className={`px-2 py-0.5 rounded font-extrabold text-[10px] ${
+                                    isSell
+                                      ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  }`}
+                                >
+                                  {t.action}
+                                </span>
+                              </td>
+                              <td className="py-2.5 font-bold text-[var(--text-primary)]">{t.symbol}</td>
+                              <td className="py-2.5 text-[var(--text-secondary)]">{t.company_name}</td>
+                              <td className="py-2.5 text-right font-semibold text-[var(--text-primary)]">
+                                {t.shares.toFixed(4)}
+                              </td>
+                              <td className="py-2.5 text-right text-[var(--text-muted)]">${t.price.toFixed(2)}</td>
+                              <td
+                                className={`py-2.5 text-right font-extrabold ${
+                                  isSell ? 'text-emerald-400' : 'text-purple-400'
+                                }`}
+                              >
+                                {isSell ? '+' : '-'}${t.total_amount.toFixed(2)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Hypothetical Post-Rebalance Holdings Table */}
+                <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] space-y-3">
+                  <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
+                    Projected Portfolio Holdings Post-Rebalance
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left font-mono">
+                      <thead>
+                        <tr className="border-b border-[var(--border-color)] text-[var(--text-muted)] text-[11px]">
+                          <th className="pb-2">Symbol</th>
+                          <th className="pb-2">Company</th>
+                          <th className="pb-2 text-right">Shares</th>
+                          <th className="pb-2 text-right">Price</th>
+                          <th className="pb-2 text-right">Market Value</th>
+                          <th className="pb-2 text-right">New Weight</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border-subtle)] tabular-nums">
+                        {reallocationResult.hypothetical_positions?.map((p, idx) => (
+                          <tr key={idx} className="hover:bg-[var(--bg-secondary)]/50 transition">
+                            <td className="py-2.5 font-bold text-emerald-400">{p.symbol}</td>
+                            <td className="py-2.5 text-[var(--text-secondary)]">{p.company_name}</td>
+                            <td className="py-2.5 text-right text-[var(--text-primary)]">{p.quantity.toFixed(4)}</td>
+                            <td className="py-2.5 text-right text-[var(--text-muted)]">${p.market_price.toFixed(2)}</td>
+                            <td className="py-2.5 text-right font-bold text-[var(--text-primary)]">
+                              ${p.market_value.toFixed(2)}
+                            </td>
+                            <td className="py-2.5 text-right font-extrabold text-emerald-400">
+                              {p.weight_percent.toFixed(2)}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Risk Observations & Regulatory Disclosures */}
+                <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-2 text-xs">
+                  <div className="font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4" />
+                    Quantitative Risk Observations & Assumptions
+                  </div>
+                  <ul className="list-disc list-inside text-amber-200/90 space-y-1">
+                    {reallocationResult.risk_observations?.map((obs, idx) => (
+                      <li key={idx}>{obs}</li>
+                    ))}
+                    {reallocationResult.assumptions?.map((assm, idx) => (
+                      <li key={idx} className="text-[11px] text-amber-300/70">{assm}</li>
+                    ))}
+                  </ul>
+                  <div className="pt-2 border-t border-amber-500/20 text-[10px] text-amber-400/80 font-mono">
+                    Hypothetical simulation for decision-support purposes only. No actual trade has been placed. Taxes, slippage, and brokerage commissions are excluded.
                   </div>
                 </div>
               </div>

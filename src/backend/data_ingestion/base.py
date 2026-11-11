@@ -55,7 +55,17 @@ class NormalizedInstrument(BaseModel):
     is_adr: bool = False
     related_adr_symbol: Optional[str] = None
     cik: Optional[str] = None
+    isin: Optional[str] = None
+    sector: Optional[str] = None
+    industry: Optional[str] = None
     provider_availability: Dict[str, bool] = Field(default_factory=dict)
+    coverage: Dict[str, bool] = Field(default_factory=lambda: {
+        "quote": True,
+        "history": True,
+        "fundamentals": True,
+        "news": True,
+        "technicals": True
+    })
 
 class NormalizedProfile(BaseModel):
     """Standardized company profile information."""

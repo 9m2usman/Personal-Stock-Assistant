@@ -8,6 +8,12 @@
 *.sqlite
 *.sqlite3
 fintech_market.db
+dump.rdb
+
+# Archives & Binaries
+*.zip
+*.tar.gz
+*.pdb
 
 # Python
 __pycache__/

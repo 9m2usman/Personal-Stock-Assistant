@@ -32,6 +32,7 @@ The AI Stock Market Assistant has been engineered from the ground up according t
 | **Phase 12** | Containerization & Orchestration | `Dockerfile.backend`, `Dockerfile.frontend`, `nginx.conf`, `docker-compose.yml`, `.dockerignore` | **COMPLETED** | Multi-stage production compose ready |
 | **Phase 13** | AWS Deployment Architecture | ECS Fargate, Aurora Serverless v2, ElastiCache Redis, S3 + CloudFront, IAM, CloudWatch specs | **COMPLETED** | `docs/AWS_DEPLOYMENT.md` published |
 | **Phase 14** | Product Rescue & Institutional Upgrade | Multi-stock instrument resolver, NVDA lock removal, TV charts (v4.2.1), RSI sub-panel, 3D globe telemetry, hardened AST sandbox, modular AI orchestrator with 13 tools, Celery health | **COMPLETED** | 51/51 tests passing in 28s, 0 TS build errors |
+| **Phase 15** | Global Stock Master, Financial AI Agent & Scenario Engine | Centralized normalized instrument master (10,405 SEC EDGAR stocks + global leaders), peer stock comparison, buy/sell scenario reallocation engine with HHI delta, native Windows Redis (port 6379) + Celery solo worker with RESP2 compatibility shim, paginated markets discovery view, zero-hallucination decision support | **COMPLETED** | 100% Acceptance Tests A-H passing (8/8) in 32.89s, Vite production build clean in 13.20s |
 
 ---
 

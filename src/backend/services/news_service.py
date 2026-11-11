@@ -21,6 +21,14 @@ class CompanySentimentOverview(BaseModel):
     breakdown: SentimentBreakdown
     articles: List[NormalizedNewsArticle]
 
+    @property
+    def sentiment_score(self) -> float:
+        return self.average_sentiment_score
+
+    @property
+    def total_articles_analyzed(self) -> int:
+        return self.total_articles
+
 class FinancialNewsService:
     """Evaluates financial news streams and derives domain-specific sentiment polarity."""
 
@@ -115,5 +123,7 @@ class FinancialNewsService:
             breakdown=SentimentBreakdown(positive=pos_count, neutral=neu_count, negative=neg_count),
             articles=articles
         )
+
+    analyze_company_sentiment = get_company_sentiment
 
 news_service = FinancialNewsService()

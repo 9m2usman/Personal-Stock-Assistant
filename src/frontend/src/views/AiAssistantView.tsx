@@ -221,20 +221,120 @@ export const AiAssistantView: React.FC<{ onSelectSymbol?: (symbol: string) => vo
 
                     {/* UI Widgets Render */}
                     {m.ui_widgets && m.ui_widgets.length > 0 && (
-                      <div className="pt-2 border-t border-[var(--border-subtle)] space-y-2">
-                        {m.ui_widgets.map((widget: any, widx: number) => (
-                          <div
-                            key={widx}
-                            className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-xs font-mono"
-                          >
-                            <div className="text-[10px] uppercase text-emerald-400 font-bold mb-1">
-                              {widget.type || 'Institutional Widget'}
+                      <div className="pt-3 border-t border-[var(--border-subtle)] space-y-3">
+                        {m.ui_widgets.map((widget: any, widx: number) => {
+                          const wType = widget.widget_type || widget.type;
+                          const wData = widget.data || widget;
+
+                          if (wType === 'COMPARISON_MATRIX') {
+                            const symA = wData.symbol_a || 'Symbol A';
+                            const symB = wData.symbol_b || 'Symbol B';
+                            const qA = wData.quote_a || {};
+                            const qB = wData.quote_b || {};
+                            const fA = wData.fundamentals_a || {};
+                            const fB = wData.fundamentals_b || {};
+                            const tA = wData.technicals_a || {};
+                            const tB = wData.technicals_b || {};
+
+                            return (
+                              <div
+                                key={widx}
+                                className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-emerald-500/30 space-y-3 font-mono"
+                              >
+                                <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
+                                  <span>HEAD-TO-HEAD COMPARISON</span>
+                                  <span className="text-[10px] text-[var(--text-muted)]">Live Data Router</span>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 text-xs border-b border-[var(--border-subtle)] pb-2 font-bold text-[var(--text-primary)]">
+                                  <div>Metric</div>
+                                  <div className="text-emerald-400">{symA}</div>
+                                  <div className="text-cyan-400">{symB}</div>
+                                </div>
+
+                                <div className="space-y-1.5 text-xs">
+                                  <div className="grid grid-cols-3 gap-2 text-[var(--text-secondary)]">
+                                    <span className="text-[var(--text-muted)]">Price</span>
+                                    <span className="font-bold text-[var(--text-primary)]">${Number(qA.price || 0).toFixed(2)}</span>
+                                    <span className="font-bold text-[var(--text-primary)]">${Number(qB.price || 0).toFixed(2)}</span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2 text-[var(--text-secondary)]">
+                                    <span className="text-[var(--text-muted)]">P/E Ratio</span>
+                                    <span>{fA.pe_ratio != null ? fA.pe_ratio : 'N/A'}</span>
+                                    <span>{fB.pe_ratio != null ? fB.pe_ratio : 'N/A'}</span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2 text-[var(--text-secondary)]">
+                                    <span className="text-[var(--text-muted)]">Gross Margin</span>
+                                    <span>{fA.gross_margin_percent != null ? `${fA.gross_margin_percent}%` : 'N/A'}</span>
+                                    <span>{fB.gross_margin_percent != null ? `${fB.gross_margin_percent}%` : 'N/A'}</span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2 text-[var(--text-secondary)]">
+                                    <span className="text-[var(--text-muted)]">14-Day RSI</span>
+                                    <span>{tA.rsi_14 != null ? Number(tA.rsi_14).toFixed(1) : 'N/A'}</span>
+                                    <span>{tB.rsi_14 != null ? Number(tB.rsi_14).toFixed(1) : 'N/A'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          if (wType === 'SCENARIO_SIMULATION') {
+                            return (
+                              <div
+                                key={widx}
+                                className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-purple-500/30 space-y-3 font-mono"
+                              >
+                                <div className="flex items-center justify-between text-xs font-bold text-purple-400">
+                                  <span>HYPOTHETICAL REALLOCATION RECEIPT</span>
+                                  <span className="text-[10px] text-[var(--text-muted)]">
+                                    NAV Delta: ${Number(wData.nav_change || 0).toFixed(2)}
+                                  </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                                  <div className="p-2 rounded bg-[var(--bg-card)]">
+                                    <span className="text-[var(--text-muted)] block text-[10px]">BEFORE NAV</span>
+                                    <span className="font-bold text-[var(--text-primary)]">
+                                      ${Number(wData.before_nav || 0).toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <div className="p-2 rounded bg-[var(--bg-card)]">
+                                    <span className="text-[var(--text-muted)] block text-[10px]">AFTER NAV</span>
+                                    <span className="font-bold text-[var(--text-primary)]">
+                                      ${Number(wData.after_nav || 0).toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <div className="p-2 rounded bg-[var(--bg-card)]">
+                                    <span className="text-[var(--text-muted)] block text-[10px]">REMAINDER CASH</span>
+                                    <span className="font-bold text-emerald-400">
+                                      ${Number(wData.after_cash || 0).toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <div className="p-2 rounded bg-[var(--bg-card)]">
+                                    <span className="text-[var(--text-muted)] block text-[10px]">HHI DELTA</span>
+                                    <span className="font-bold text-cyan-400">
+                                      {wData.before_hhi?.toFixed(3)} ➔ {wData.after_hhi?.toFixed(3)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div
+                              key={widx}
+                              className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-xs font-mono"
+                            >
+                              <div className="text-[10px] uppercase text-emerald-400 font-bold mb-1">
+                                {wType || 'Institutional Widget'}
+                              </div>
+                              <pre className="text-[11px] text-[var(--text-secondary)] overflow-x-auto">
+                                {JSON.stringify(wData, null, 2)}
+                              </pre>
                             </div>
-                            <pre className="text-[11px] text-[var(--text-secondary)] overflow-x-auto">
-                              {JSON.stringify(widget.data || widget, null, 2)}
-                            </pre>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
 
