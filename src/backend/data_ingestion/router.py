@@ -133,6 +133,16 @@ class FinancialDataRouter:
             logger.warning("FMP financials failed for %s: %s. Trying SEC EDGAR XBRL...", norm_sym, e)
             return await self.sec_edgar.get_income_statement(norm_sym, limit)
 
+    async def get_balance_sheets(self, symbol: str, limit: int = 5) -> List[NormalizedFinancialStatement]:
+        """Retrieves balance sheets from FMP stable."""
+        norm_sym = self.adr_proxies.get(symbol.upper(), symbol)
+        return await self.fmp.get_balance_sheet(norm_sym, limit)
+
+    async def get_cash_flows(self, symbol: str, limit: int = 5) -> List[NormalizedFinancialStatement]:
+        """Retrieves cash flow statements from FMP stable."""
+        norm_sym = self.adr_proxies.get(symbol.upper(), symbol)
+        return await self.fmp.get_cash_flow_statement(norm_sym, limit)
+
     async def search_news(self, query: str, limit: int = 5) -> List[NormalizedNewsArticle]:
         """Retrieves news articles via NewsAPI."""
         return await self.news_api.search_news(query, limit)

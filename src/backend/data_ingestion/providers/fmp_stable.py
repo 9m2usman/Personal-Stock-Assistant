@@ -197,3 +197,89 @@ class FMPStableClient(BaseMarketDataProvider, BaseFundamentalProvider):
 
             cache.set(cache_key, statements, ttl_seconds=86400 * 7)
             return statements
+
+    async def get_balance_sheet(self, symbol: str, limit: int = 5) -> List[NormalizedFinancialStatement]:
+        cache_key = f"fmp_balance_{symbol}_{limit}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+
+        await rate_limiters["fmp"].acquire()
+        url = f"{self.base_url}/balance-sheet-statement"
+        params = {"symbol": symbol, "limit": limit, "apikey": self.api_key}
+
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            resp = await client.get(url, params=params)
+            if resp.status_code == 402:
+                raise ProviderTierRestrictionError("fmp", symbol, "Paid Subscription Plan")
+            if resp.status_code != 200:
+                raise InstrumentNotFoundError(symbol, details={"status_code": resp.status_code})
+
+            data = resp.json()
+            if not isinstance(data, list):
+                raise InstrumentNotFoundError(symbol, details=data)
+
+            statements: List[NormalizedFinancialStatement] = []
+            for item in data:
+                statements.append(NormalizedFinancialStatement(
+                    symbol=item.get("symbol", symbol),
+                    statement_type="BALANCE_SHEET",
+                    fiscal_period=item.get("period", "FY"),
+                    fiscal_year=int(item.get("fiscalYear") or item.get("calendarYear") or 0),
+                    filing_date=date.fromisoformat(item.get("filingDate") or item.get("date")),
+                    reported_currency=item.get("reportedCurrency", "USD"),
+                    source=self.provider_name,
+                    metrics={
+                        "totalAssets": item.get("totalAssets"),
+                        "totalLiabilities": item.get("totalLiabilities"),
+                        "totalStockholdersEquity": item.get("totalStockholdersEquity"),
+                        "totalDebt": item.get("totalDebt"),
+                        "totalCurrentAssets": item.get("totalCurrentAssets"),
+                        "totalCurrentLiabilities": item.get("totalCurrentLiabilities"),
+                        "cashAndCashEquivalents": item.get("cashAndCashEquivalents")
+                    }
+                ))
+
+            cache.set(cache_key, statements, ttl_seconds=86400 * 7)
+            return statements
+
+    async def get_cash_flow_statement(self, symbol: str, limit: int = 5) -> List[NormalizedFinancialStatement]:
+        cache_key = f"fmp_cashflow_{symbol}_{limit}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+
+        await rate_limiters["fmp"].acquire()
+        url = f"{self.base_url}/cash-flow-statement"
+        params = {"symbol": symbol, "limit": limit, "apikey": self.api_key}
+
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            resp = await client.get(url, params=params)
+            if resp.status_code == 402:
+                raise ProviderTierRestrictionError("fmp", symbol, "Paid Subscription Plan")
+            if resp.status_code != 200:
+                raise InstrumentNotFoundError(symbol, details={"status_code": resp.status_code})
+
+            data = resp.json()
+            if not isinstance(data, list):
+                raise InstrumentNotFoundError(symbol, details=data)
+
+            statements: List[NormalizedFinancialStatement] = []
+            for item in data:
+                statements.append(NormalizedFinancialStatement(
+                    symbol=item.get("symbol", symbol),
+                    statement_type="CASH_FLOW",
+                    fiscal_period=item.get("period", "FY"),
+                    fiscal_year=int(item.get("fiscalYear") or item.get("calendarYear") or 0),
+                    filing_date=date.fromisoformat(item.get("filingDate") or item.get("date")),
+                    reported_currency=item.get("reportedCurrency", "USD"),
+                    source=self.provider_name,
+                    metrics={
+                        "netCashProvidedByOperatingActivities": item.get("netCashProvidedByOperatingActivities"),
+                        "capitalExpenditure": item.get("capitalExpenditure"),
+                        "freeCashFlow": item.get("freeCashFlow")
+                    }
+                ))
+
+            cache.set(cache_key, statements, ttl_seconds=86400 * 7)
+            return statements
