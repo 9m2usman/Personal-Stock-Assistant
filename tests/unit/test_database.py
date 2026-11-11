@@ -5,17 +5,29 @@ import pytest
 from datetime import date
 from decimal import Decimal
 from sqlalchemy import select
-from src.backend.core.database import Base, async_engine, async_session_factory
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from src.backend.core.database import Base
 from src.backend.models import User, Exchange, Instrument, DailyPrice, Portfolio, Holding
+
+# Use an isolated in-memory SQLite engine for deterministic unit testing
+test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+test_session_factory = async_sessionmaker(
+    bind=test_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False
+)
 
 @pytest.mark.asyncio
 async def test_database_table_creation_and_crud():
     """Verify schema creation and basic relational entity persistence."""
-    # Ensure tables exist
-    async with async_engine.begin() as conn:
+    # Ensure fresh in-memory tables
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-    async with async_session_factory() as session:
+    async with test_session_factory() as session:
         # 1. Create Exchange
         exchange = Exchange(
             mic_code="XNGS",
@@ -96,3 +108,5 @@ async def test_database_table_creation_and_crud():
         query_port = await session.execute(select(Portfolio).where(Portfolio.user_id == user.id))
         fetched_port = query_port.scalar_one()
         assert fetched_port.name == "Tech Growth Model"
+
+    await test_engine.dispose()
