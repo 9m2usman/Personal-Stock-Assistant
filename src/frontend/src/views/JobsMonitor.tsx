@@ -2,11 +2,21 @@ import React, { useState } from 'react';
 import { Cpu, Play, CheckCircle2, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { enqueueResearchJob, pollJobStatus } from '../api/client.ts';
 
-export const JobsMonitor: React.FC = () => {
-  const [symbol, setSymbol] = useState('NVDA');
+interface JobsMonitorProps {
+  initialSymbol?: string;
+}
+
+export const JobsMonitor: React.FC<JobsMonitorProps> = ({ initialSymbol = 'NVDA' }) => {
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<any>(null);
   const [polling, setPolling] = useState(false);
+
+  React.useEffect(() => {
+    if (initialSymbol && initialSymbol !== symbol) {
+      setSymbol(initialSymbol);
+    }
+  }, [initialSymbol]);
 
   const startResearchJob = async () => {
     try {

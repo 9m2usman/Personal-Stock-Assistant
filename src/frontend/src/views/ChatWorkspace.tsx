@@ -101,6 +101,7 @@ export const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ onSelectSymbol }) 
           <CandlestickChart
             data={widget.data.candlesticks || []}
             indicators={widget.data.indicators}
+            symbol={widget.data.symbol || 'STOCK'}
             height={360}
           />
         </div>

@@ -6,14 +6,21 @@ import { MetricCard } from '../components/MetricCard.tsx';
 
 interface TechnicalStudioProps {
   initialSymbol?: string;
+  onSelectSymbol?: (symbol: string) => void;
 }
 
-export const TechnicalStudio: React.FC<TechnicalStudioProps> = ({ initialSymbol = 'NVDA' }) => {
+export const TechnicalStudio: React.FC<TechnicalStudioProps> = ({ initialSymbol = 'NVDA', onSelectSymbol }) => {
   const [symbol, setSymbol] = useState(initialSymbol);
   const [limit, setLimit] = useState(100);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialSymbol && initialSymbol !== symbol) {
+      setSymbol(initialSymbol);
+    }
+  }, [initialSymbol]);
 
   useEffect(() => {
     loadTechnicals(symbol, limit);
@@ -142,6 +149,8 @@ export const TechnicalStudio: React.FC<TechnicalStudioProps> = ({ initialSymbol 
           <CandlestickChart
             data={data.candlesticks}
             indicators={data.indicators}
+            symbol={symbol}
+            currency={data.currency || 'USD'}
             height={500}
           />
           <div className="flex items-center justify-between text-xs text-slate-500 px-2">

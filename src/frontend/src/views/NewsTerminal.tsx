@@ -3,11 +3,22 @@ import { Newspaper, Search, ExternalLink, ThumbsUp, ThumbsDown, Minus } from 'lu
 import { fetchCompanySentiment } from '../api/client.ts';
 import { MetricCard } from '../components/MetricCard.tsx';
 
-export const NewsTerminal: React.FC = () => {
-  const [symbol, setSymbol] = useState('NVDA');
-  const [query, setQuery] = useState('NVDA');
+interface NewsTerminalProps {
+  initialSymbol?: string;
+}
+
+export const NewsTerminal: React.FC<NewsTerminalProps> = ({ initialSymbol = 'NVDA' }) => {
+  const [symbol, setSymbol] = useState(initialSymbol);
+  const [query, setQuery] = useState(initialSymbol);
   const [sentiment, setSentiment] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialSymbol && initialSymbol !== symbol) {
+      setSymbol(initialSymbol);
+      setQuery(initialSymbol);
+    }
+  }, [initialSymbol]);
 
   useEffect(() => {
     loadSentiment(symbol);

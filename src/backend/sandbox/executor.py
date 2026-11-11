@@ -1,13 +1,15 @@
 """
 Python Analytical Execution Sandbox
 Provides safe, isolated evaluation of mathematical, portfolio, and quantitative algorithms.
-Enforces strict timeouts, AST safety inspections, and import restrictions.
+Enforces strict timeouts, AST safety inspections, import restrictions, and structured output parsing.
 """
 from typing import Optional, Dict, Any, List
 import ast
 import asyncio
 import sys
 import time
+import json
+import subprocess
 from pydantic import BaseModel
 from src.backend.core.logging import logger
 
@@ -30,18 +32,24 @@ class PythonSandboxExecutor:
     FORBIDDEN_MODULES = {
         "os", "sys", "subprocess", "socket", "http", "urllib", "requests", "httpx",
         "shutil", "ctypes", "multiprocessing", "threading", "pty", "posix",
-        "builtins", "importlib", "pathlib", "tempfile"
+        "builtins", "importlib", "pathlib", "tempfile", "signal", "inspect", "pickle"
     }
 
     FORBIDDEN_CALLS = {
-        "eval", "exec", "compile", "open", "__import__", "globals", "locals"
+        "eval", "exec", "compile", "open", "__import__", "globals", "locals",
+        "getattr", "setattr", "delattr", "input", "exit", "quit"
+    }
+
+    FORBIDDEN_ATTRIBUTES = {
+        "__subclasses__", "__builtins__", "__globals__", "__code__", "__reduce__",
+        "__class__", "__bases__", "__mro__"
     }
 
     def __init__(self, default_timeout_seconds: float = 5.0):
         self.default_timeout_seconds = default_timeout_seconds
 
     def validate_code_ast(self, code_str: str) -> None:
-        """Parses AST to verify that no forbidden modules, file operations, or unsafe calls exist."""
+        """Parses AST to verify that no forbidden modules, file operations, dunder leaks or unsafe calls exist."""
         try:
             tree = ast.parse(code_str)
         except SyntaxError as e:
@@ -67,6 +75,11 @@ class PythonSandboxExecutor:
                 if isinstance(node.func, ast.Name):
                     if node.func.id in self.FORBIDDEN_CALLS:
                         raise SandboxSecurityError(f"Forbidden call to '{node.func.id}()' is blocked by sandbox security policy.")
+
+            # Check forbidden attribute access (dunder introspection)
+            elif isinstance(node, ast.Attribute):
+                if node.attr in self.FORBIDDEN_ATTRIBUTES:
+                    raise SandboxSecurityError(f"Forbidden attribute access '{node.attr}' is blocked by sandbox security policy.")
 
     async def execute_code(
         self,
@@ -112,18 +125,40 @@ class PythonSandboxExecutor:
             stderr_str = stderr_bytes.decode(errors="replace")
 
             success = (proc.returncode == 0)
+
+            # Try to extract structured JSON output if present
+            output_data = None
+            if success and stdout_str.strip():
+                try:
+                    # Check if entire stdout or last line is JSON
+                    lines = [ln.strip() for ln in stdout_str.strip().splitlines() if ln.strip()]
+                    for candidate in [stdout_str.strip(), lines[-1]]:
+                        if candidate.startswith("{") and candidate.endswith("}"):
+                            output_data = json.loads(candidate)
+                            break
+                except Exception:
+                    output_data = None
+
             return SandboxExecutionResult(
                 success=success,
                 stdout=stdout_str,
                 stderr=stderr_str,
                 execution_time_ms=round(elapsed_ms, 2),
-                error=stderr_str if not success else None
+                error=stderr_str if not success else None,
+                output_data=output_data
             )
 
         except asyncio.TimeoutError:
             if proc:
                 try:
                     proc.kill()
+                    if sys.platform == "win32":
+                        # Ensure tree kill on Windows
+                        subprocess.run(
+                            ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                            capture_output=True,
+                            timeout=2.0
+                        )
                     await proc.wait()
                 except Exception:
                     pass

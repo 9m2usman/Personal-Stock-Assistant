@@ -12,29 +12,27 @@ export function App() {
   const [activeTab, setActiveTab] = useState('chat');
   const [selectedSymbol, setSelectedSymbol] = useState('NVDA');
 
-  const handleSelectSymbol = (sym: string) => {
-    setSelectedSymbol(sym);
-    setActiveTab('technical');
-  };
-
-  const handleQuickSearch = (sym: string) => {
-    setSelectedSymbol(sym);
-    setActiveTab('research');
+  const handleSelectSymbol = (sym: string, targetTab?: string) => {
+    setSelectedSymbol(sym.toUpperCase());
+    if (targetTab) {
+      setActiveTab(targetTab);
+    }
   };
 
   return (
     <AppShell
       activeTab={activeTab}
       setActiveTab={setActiveTab}
-      onSearchSymbol={handleQuickSearch}
+      selectedSymbol={selectedSymbol}
+      onSelectSymbol={(sym) => handleSelectSymbol(sym)}
     >
-      {activeTab === 'chat' && <ChatWorkspace onSelectSymbol={handleSelectSymbol} />}
-      {activeTab === 'research' && <MarketResearch initialSymbol={selectedSymbol} />}
-      {activeTab === 'technical' && <TechnicalStudio initialSymbol={selectedSymbol} />}
+      {activeTab === 'chat' && <ChatWorkspace onSelectSymbol={(sym) => handleSelectSymbol(sym, 'technical')} />}
+      {activeTab === 'research' && <MarketResearch initialSymbol={selectedSymbol} onSelectSymbol={(sym) => handleSelectSymbol(sym)} />}
+      {activeTab === 'technical' && <TechnicalStudio initialSymbol={selectedSymbol} onSelectSymbol={(sym) => handleSelectSymbol(sym)} />}
       {activeTab === 'portfolio' && <PortfolioDashboard />}
       {activeTab === 'scenarios' && <ScenarioLab />}
-      {activeTab === 'news' && <NewsTerminal />}
-      {activeTab === 'jobs' && <JobsMonitor />}
+      {activeTab === 'news' && <NewsTerminal initialSymbol={selectedSymbol} />}
+      {activeTab === 'jobs' && <JobsMonitor initialSymbol={selectedSymbol} />}
     </AppShell>
   );
 }

@@ -1,19 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Building2, DollarSign, BarChart3, FileText, CheckCircle2 } from 'lucide-react';
+import { Search, Building2, DollarSign, BarChart3, FileText, CheckCircle2, Globe, ShieldAlert } from 'lucide-react';
 import { fetchFundamentals, fetchQuote } from '../api/client.ts';
 import { MetricCard } from '../components/MetricCard.tsx';
+import { GlobalMarketGlobe3D } from '../components/GlobalMarketGlobe3D.tsx';
 
 interface MarketResearchProps {
   initialSymbol?: string;
+  onSelectSymbol?: (symbol: string) => void;
 }
 
-export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 'NVDA' }) => {
+export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 'NVDA', onSelectSymbol }) => {
   const [symbol, setSymbol] = useState(initialSymbol);
   const [query, setQuery] = useState(initialSymbol);
   const [data, setData] = useState<any>(null);
   const [quote, setQuote] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'income' | 'balance' | 'cash'>('income');
+
+  useEffect(() => {
+    if (initialSymbol && initialSymbol !== symbol) {
+      setSymbol(initialSymbol);
+      setQuery(initialSymbol);
+    }
+  }, [initialSymbol]);
 
   useEffect(() => {
     loadData(symbol);
@@ -22,16 +32,28 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
   const loadData = async (sym: string) => {
     if (!sym) return;
     setLoading(true);
+    setError(null);
     try {
       const [fundRes, quoteRes] = await Promise.allSettled([
         fetchFundamentals(sym),
         fetchQuote(sym)
       ]);
 
-      if (fundRes.status === 'fulfilled') setData(fundRes.value);
-      if (quoteRes.status === 'fulfilled') setQuote(quoteRes.value);
-    } catch (e) {
+      if (fundRes.status === 'fulfilled') {
+        setData(fundRes.value);
+      } else {
+        setData(null);
+        setError(`Fundamentals unavailable for ${sym}. Free tier limits may apply.`);
+      }
+
+      if (quoteRes.status === 'fulfilled') {
+        setQuote(quoteRes.value);
+      } else {
+        setQuote(null);
+      }
+    } catch (e: any) {
       console.error(e);
+      setError(e.message || 'Failed to load company research.');
     } finally {
       setLoading(false);
     }
@@ -40,7 +62,9 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      setSymbol(query.trim().toUpperCase());
+      const cleanSym = query.trim().toUpperCase();
+      setSymbol(cleanSym);
+      if (onSelectSymbol) onSelectSymbol(cleanSym);
     }
   };
 
@@ -52,6 +76,9 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* 3D Global Telemetry Banner */}
+      <GlobalMarketGlobe3D />
+
       {/* Search Header */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
         <div>
@@ -70,12 +97,12 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
               value={query}
               onChange={(e) => setQuery(e.target.value.toUpperCase())}
               placeholder="Search ticker (e.g. NVDA, MSFT)..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 font-mono"
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-medium rounded-lg text-sm transition"
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-lg text-sm transition"
           >
             Analyze
           </button>
@@ -83,8 +110,16 @@ export const MarketResearch: React.FC<MarketResearchProps> = ({ initialSymbol = 
       </div>
 
       {loading && (
-        <div className="text-center py-12 text-slate-400 text-sm">
-          Loading institutional fundamentals for {symbol}...
+        <div className="text-center py-12 text-slate-400 text-sm animate-pulse flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+          <span>Loading institutional fundamentals for {symbol}...</span>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="p-4 bg-amber-950/40 border border-amber-800/60 rounded-xl text-amber-300 text-xs flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 shrink-0 text-amber-400" />
+          <span>{error}</span>
         </div>
       )}
 

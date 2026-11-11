@@ -74,3 +74,37 @@ async def test_chat_message_e2e():
         data = res.json()
         assert data["session_id"] == "test_e2e_session"
         assert "institutional AI Stock Market Assistant" in data["message"]["content"]
+
+@pytest.mark.asyncio
+async def test_instrument_search_and_watchlist_e2e():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # 1. Search by symbol
+        r1 = await ac.get("/api/v1/market/search?query=MSFT")
+        assert r1.status_code == 200
+        matches = r1.json()
+        assert len(matches) > 0
+        assert matches[0]["display_symbol"] == "MSFT"
+
+        # 2. Search by company name
+        r2 = await ac.get("/api/v1/market/search?query=Toyota")
+        assert r2.status_code == 200
+        toyota_matches = [m["display_symbol"] for m in r2.json()]
+        assert "7203.T" in toyota_matches
+        assert "TM" in toyota_matches
+
+        # 3. Watchlist
+        r3 = await ac.get("/api/v1/market/watchlist")
+        assert r3.status_code == 200
+        wl = r3.json()
+        assert len(wl) >= 6
+
+@pytest.mark.asyncio
+async def test_jobs_health_and_research_task_e2e():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # Check jobs health
+        r_health = await ac.get("/api/v1/jobs/health")
+        assert r_health.status_code == 200
+        h_data = r_health.json()
+        assert "status" in h_data
+        assert "tasks.generate_deep_research_report" in h_data["registered_domain_tasks"]
+

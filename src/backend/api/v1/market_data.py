@@ -2,13 +2,34 @@
 Market Data API Routes
 Provides quotes, historical candlestick bars, and computed technical indicators.
 """
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Query, status, HTTPException
 from src.backend.services.market_service import market_service, MarketSummary
 from src.backend.services.technical_service import ChartReadyTechnicalPayload
-from src.backend.data_ingestion.base import NormalizedQuote, NormalizedBar
+from src.backend.services.instrument_service import instrument_service
+from src.backend.data_ingestion.base import NormalizedQuote, NormalizedBar, NormalizedInstrument
 
 router = APIRouter()
+
+@router.get("/search", response_model=List[NormalizedInstrument], status_code=status.HTTP_200_OK, summary="Unified Instrument Search")
+async def search_instruments(
+    query: str = Query(default="", description="Search query: company name, ticker, exchange, country"),
+    exchange: Optional[str] = Query(default=None, description="Filter by exchange code or MIC (e.g. NASDAQ, XLON, XJPX)"),
+    limit: int = Query(default=15, ge=1, le=50, description="Max results to return")
+):
+    """Searches normalized instruments across global exchanges and returns matches."""
+    return await instrument_service.search(query=query, exchange=exchange, limit=limit)
+
+@router.get("/instruments", response_model=List[NormalizedInstrument], status_code=status.HTTP_200_OK, summary="List Supported Instruments")
+async def list_instruments():
+    """Returns all canonically registered and resolved instruments."""
+    return await instrument_service.search(query="", limit=50)
+
+@router.get("/watchlist", response_model=List[Dict[str, Any]], status_code=status.HTTP_200_OK, summary="Get Multi-Stock Watchlist")
+async def get_watchlist():
+    """Retrieve diversified watchlist of instruments with live quotes and data freshness."""
+    return await instrument_service.get_watchlist()
+
 
 @router.get("/quote", response_model=NormalizedQuote, status_code=status.HTTP_200_OK, summary="Get Real-Time / Latest Quote")
 async def get_quote(

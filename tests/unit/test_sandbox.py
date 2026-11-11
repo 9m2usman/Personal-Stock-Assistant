@@ -42,3 +42,20 @@ async def test_timeout_enforcement():
     result = await sandbox_executor.execute_code(code, timeout_seconds=1.0)
     assert result.success is False
     assert "exceeded strict limit of 1.0 seconds" in result.error
+
+@pytest.mark.asyncio
+async def test_structured_json_output_extraction():
+    code = "import json\nres = {'status': 'calculated', 'roi': 15.5, 'symbol': 'NVDA'}\nprint(json.dumps(res))"
+    result = await sandbox_executor.execute_code(code)
+    assert result.success is True
+    assert result.output_data is not None
+    assert result.output_data["roi"] == 15.5
+    assert result.output_data["symbol"] == "NVDA"
+
+@pytest.mark.asyncio
+async def test_dunder_attribute_rejection():
+    code = "().__class__.__bases__[0].__subclasses__()"
+    result = await sandbox_executor.execute_code(code)
+    assert result.success is False
+    assert "Forbidden attribute access" in result.error
+

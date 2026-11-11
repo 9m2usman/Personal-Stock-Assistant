@@ -40,6 +40,23 @@ class NormalizedQuote(BaseModel):
     provider: str
     freshness: DataFreshness = DataFreshness.DELAYED
 
+class NormalizedInstrument(BaseModel):
+    """Provider-independent normalized financial instrument."""
+    id: str
+    company_name: str
+    display_symbol: str
+    provider_symbols: Dict[str, str] = Field(default_factory=dict)
+    exchange_mic: str
+    exchange_name: str
+    country: str
+    currency: str
+    instrument_type: str = "Common Stock"
+    listing_type: str = "Primary"  # Primary, Secondary, ADR, ETF
+    is_adr: bool = False
+    related_adr_symbol: Optional[str] = None
+    cik: Optional[str] = None
+    provider_availability: Dict[str, bool] = Field(default_factory=dict)
+
 class NormalizedProfile(BaseModel):
     """Standardized company profile information."""
     symbol: str

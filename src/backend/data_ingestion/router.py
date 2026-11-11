@@ -48,24 +48,51 @@ class FinancialDataRouter:
 
     async def get_quote(self, symbol: str) -> NormalizedQuote:
         """Retrieves real-time quote with ADR resolution and failover."""
-        norm_sym = self.adr_proxies.get(symbol.upper(), symbol)
-        if norm_sym.endswith(".LON"):
-            bars = await self.alpha_vantage.get_daily_history(norm_sym, limit=1)
-            if not bars:
-                raise InstrumentNotFoundError(symbol, "Alpha Vantage", "No quote data returned")
-            latest = bars[0]
-            change = latest.close - latest.open
-            pct_change = round((change / latest.open) * Decimal("100"), 2) if latest.open else Decimal("0")
-            return NormalizedQuote(
-                symbol=norm_sym,
-                price=latest.close,
-                change=change,
-                change_percent=pct_change,
-                currency=latest.currency,
-                exchange="LSE",
-                as_of=datetime.now(timezone.utc),
-                provider="alpha_vantage"
-            )
+        clean_upper = symbol.strip().upper()
+        norm_sym = self.adr_proxies.get(clean_upper, clean_upper)
+        
+        # UK London Stock Exchange ticker handling (.LON or .L or LSE)
+        is_uk = norm_sym.endswith(".LON") or norm_sym.endswith(".L")
+        if is_uk:
+            av_sym = norm_sym if norm_sym.endswith(".LON") else norm_sym.replace(".L", ".LON")
+            try:
+                bars = await self.alpha_vantage.get_daily_history(av_sym, limit=1)
+                if bars:
+                    latest = bars[0]
+                    change = latest.close - latest.open
+                    pct_change = round((change / latest.open) * Decimal("100"), 2) if latest.open else Decimal("0")
+                    return NormalizedQuote(
+                        symbol=norm_sym,
+                        price=latest.close,
+                        change=change,
+                        change_percent=pct_change,
+                        currency=latest.currency,
+                        exchange="LSE",
+                        as_of=datetime.now(timezone.utc),
+                        provider="alpha_vantage"
+                    )
+            except Exception as av_err:
+                logger.warning("Alpha Vantage quote failed for UK ticker %s: %s. Trying FMP...", av_sym, av_err)
+
+            fmp_sym = norm_sym if norm_sym.endswith(".L") else norm_sym.replace(".LON", ".L")
+            try:
+                bars = await self.fmp.get_daily_history(fmp_sym, limit=1)
+                if bars:
+                    latest = bars[0]
+                    change = latest.close - latest.open
+                    pct_change = round((change / latest.open) * Decimal("100"), 2) if latest.open else Decimal("0")
+                    return NormalizedQuote(
+                        symbol=norm_sym,
+                        price=latest.close,
+                        change=change,
+                        change_percent=pct_change,
+                        currency=latest.currency,
+                        exchange="LSE",
+                        as_of=datetime.now(timezone.utc),
+                        provider="fmp"
+                    )
+            except Exception as fmp_err:
+                logger.warning("FMP UK quote fallback failed for %s: %s", fmp_sym, fmp_err)
 
         try:
             return await self.twelve_data.get_quote(norm_sym)
@@ -95,13 +122,21 @@ class FinancialDataRouter:
         limit: int = 100
     ) -> List[NormalizedBar]:
         """Retrieves daily OHLCV bars with automatic failover."""
+        clean_upper = symbol.strip().upper()
         # 1. Check for ADR proxy
-        norm_sym = self.adr_proxies.get(symbol.upper(), symbol)
+        norm_sym = self.adr_proxies.get(clean_upper, clean_upper)
 
-        # 2. UK London Stock Exchange tickers (.LON or LSE) route to Alpha Vantage
-        if norm_sym.endswith(".LON") or exchange == "LSE":
-            logger.info("Routing UK ticker %s to Alpha Vantage...", norm_sym)
-            return await self.alpha_vantage.get_daily_history(norm_sym, exchange, limit)
+        # 2. UK London Stock Exchange tickers (.LON, .L or LSE) route to Alpha Vantage / FMP
+        is_uk = norm_sym.endswith(".LON") or norm_sym.endswith(".L") or exchange in ["LSE", "XLON"]
+        if is_uk:
+            av_sym = norm_sym if norm_sym.endswith(".LON") else norm_sym.replace(".L", ".LON")
+            try:
+                logger.info("Routing UK ticker %s to Alpha Vantage...", av_sym)
+                return await self.alpha_vantage.get_daily_history(av_sym, exchange, limit)
+            except Exception as av_err:
+                logger.warning("Alpha Vantage UK bars failed for %s: %s. Attempting FMP UK fallback...", av_sym, av_err)
+                fmp_sym = norm_sym if norm_sym.endswith(".L") else norm_sym.replace(".LON", ".L")
+                return await self.fmp.get_daily_history(fmp_sym, exchange, limit)
 
         # 3. US equities: Primary Twelve Data -> Fallback FMP /stable/
         try:

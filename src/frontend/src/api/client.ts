@@ -109,3 +109,60 @@ export async function pollJobStatus(taskId: string): Promise<any> {
   if (!res.ok) throw new Error(`Job status error: ${res.statusText}`);
   return res.json();
 }
+
+export interface NormalizedInstrument {
+  id: string;
+  company_name: string;
+  display_symbol: string;
+  provider_symbols?: Record<string, string>;
+  exchange_mic: string;
+  exchange_name: string;
+  country: string;
+  currency: string;
+  instrument_type: string;
+  listing_type: string;
+  is_adr: boolean;
+  related_adr_symbol?: string;
+  cik?: string;
+  provider_availability?: Record<string, boolean>;
+}
+
+export interface WatchlistItem {
+  symbol: string;
+  company_name: string;
+  exchange: string;
+  currency: string;
+  price: number | null;
+  change: number | null;
+  change_percent: number | null;
+  volume?: number;
+  as_of: string;
+  freshness: string;
+  provider: string;
+  is_adr?: boolean;
+  listing_type?: string;
+  error?: string;
+}
+
+export async function searchInstruments(query: string = '', exchange?: string, limit: number = 15): Promise<NormalizedInstrument[]> {
+  const params = new URLSearchParams();
+  if (query) params.append('query', query);
+  if (exchange) params.append('exchange', exchange);
+  params.append('limit', String(limit));
+  const res = await fetch(`${BASE_URL}/market/search?${params.toString()}`);
+  if (!res.ok) throw new Error(`Search error: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchWatchlist(): Promise<WatchlistItem[]> {
+  const res = await fetch(`${BASE_URL}/market/watchlist`);
+  if (!res.ok) throw new Error(`Watchlist error: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchWorkerHealth(): Promise<any> {
+  const res = await fetch(`${BASE_URL}/jobs/health`);
+  if (!res.ok) throw new Error(`Jobs health error: ${res.statusText}`);
+  return res.json();
+}
+

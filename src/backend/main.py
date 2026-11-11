@@ -20,6 +20,10 @@ async def lifespan(app: FastAPI):
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database schema initialized successfully.")
+
+        # Seed institutional instruments universe into DB if missing
+        from src.backend.services.instrument_service import instrument_service
+        await instrument_service.seed_database_if_empty()
     except Exception as e:
         logger.warning("Database schema auto-creation skipped or deferred: %s", e)
 
