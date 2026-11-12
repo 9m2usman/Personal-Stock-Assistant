@@ -33,6 +33,7 @@ async def check_health() -> HealthResponse:
             "fmp": bool(settings.FMP_API_KEY and settings.FMP_API_KEY.get_secret_value()),
             "newsapi": bool(settings.NEWSAPI_API_KEY and settings.NEWSAPI_API_KEY.get_secret_value()),
             "nasdaq_data_link": bool(settings.NASDAQ_DATA_LINK_API_KEY and settings.NASDAQ_DATA_LINK_API_KEY.get_secret_value()),
+            "groq": bool(settings.GROQ_API_KEY and settings.GROQ_API_KEY.get_secret_value()),
             "sec_edgar": True  # Public API without key
         }
     )

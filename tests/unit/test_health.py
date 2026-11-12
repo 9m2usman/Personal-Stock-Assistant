@@ -32,6 +32,7 @@ async def test_api_v1_health(monkeypatch):
     assert "fmp" in providers
     assert "newsapi" in providers
     assert "nasdaq_data_link" in providers
+    assert "groq" in providers
 
     # Verify that providers report True when configured with API keys
     monkeypatch.setattr(settings, "ALPHA_VANTAGE_API_KEY", SecretStr("test_alpha_key"))
@@ -39,6 +40,7 @@ async def test_api_v1_health(monkeypatch):
     monkeypatch.setattr(settings, "FMP_API_KEY", SecretStr("test_fmp_key"))
     monkeypatch.setattr(settings, "NEWSAPI_API_KEY", SecretStr("test_news_key"))
     monkeypatch.setattr(settings, "NASDAQ_DATA_LINK_API_KEY", SecretStr("test_nasdaq_key"))
+    monkeypatch.setattr(settings, "GROQ_API_KEY", SecretStr("test_groq_key"))
 
     configured_resp = await check_health()
     assert configured_resp.status == "HEALTHY"
@@ -47,6 +49,7 @@ async def test_api_v1_health(monkeypatch):
     assert configured_resp.configured_providers["fmp"] is True
     assert configured_resp.configured_providers["newsapi"] is True
     assert configured_resp.configured_providers["nasdaq_data_link"] is True
+    assert configured_resp.configured_providers["groq"] is True
     assert configured_resp.configured_providers["sec_edgar"] is True
 
     # Verify that providers report False when keys are absent
@@ -55,6 +58,7 @@ async def test_api_v1_health(monkeypatch):
     monkeypatch.setattr(settings, "FMP_API_KEY", None)
     monkeypatch.setattr(settings, "NEWSAPI_API_KEY", None)
     monkeypatch.setattr(settings, "NASDAQ_DATA_LINK_API_KEY", None)
+    monkeypatch.setattr(settings, "GROQ_API_KEY", None)
 
     unconfigured_resp = await check_health()
     assert unconfigured_resp.status == "HEALTHY"
@@ -63,5 +67,6 @@ async def test_api_v1_health(monkeypatch):
     assert unconfigured_resp.configured_providers["fmp"] is False
     assert unconfigured_resp.configured_providers["newsapi"] is False
     assert unconfigured_resp.configured_providers["nasdaq_data_link"] is False
+    assert unconfigured_resp.configured_providers["groq"] is False
     assert unconfigured_resp.configured_providers["sec_edgar"] is True
 

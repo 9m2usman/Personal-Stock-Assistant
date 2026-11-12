@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     NEWSAPI_API_KEY: Optional[SecretStr] = None
     NASDAQ_DATA_LINK_API_KEY: Optional[SecretStr] = None
 
+    # AI & LLM Inference (Groq Cloud)
+    GROQ_API_KEY: Optional[SecretStr] = None
+    GROQ_MODEL: str = "qwen/qwen3.8-27b"
+
     # SEC EDGAR Fair-Access User-Agent
     SEC_EDGAR_USER_AGENT: str = "InkVectorResearch/1.0 (contact@inkvector.com; Academic & Financial Research)"
 

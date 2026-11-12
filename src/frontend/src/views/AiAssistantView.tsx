@@ -94,9 +94,9 @@ export const AiAssistantView: React.FC<{ onSelectSymbol?: (symbol: string) => vo
 
       const aiMsg: Message = {
         role: 'assistant',
-        content: res.answer,
-        ui_widgets: res.ui_widgets,
-        sources: res.sources,
+        content: res.answer || res.message?.content || '',
+        ui_widgets: res.ui_widgets || res.message?.widgets || [],
+        sources: res.sources || res.message?.citations || [],
         timestamp: new Date().toLocaleTimeString(),
       };
 

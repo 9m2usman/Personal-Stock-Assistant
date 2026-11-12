@@ -17,7 +17,8 @@ def test_secret_string_masking():
         "TWELVE_DATA_API_KEY",
         "FMP_API_KEY",
         "NEWSAPI_API_KEY",
-        "NASDAQ_DATA_LINK_API_KEY"
+        "NASDAQ_DATA_LINK_API_KEY",
+        "GROQ_API_KEY"
     ]:
         val = getattr(settings, key_name)
         if val is not None:

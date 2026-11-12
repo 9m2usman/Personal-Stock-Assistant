@@ -21,6 +21,8 @@ from src.backend.ai.tools.registry import tool_registry
 from src.backend.ai.policy import policy_engine, PolicyViolationError
 from src.backend.services.instrument_service import instrument_service
 from src.backend.services.scenario_service import scenario_engine
+from src.backend.ai.groq_service import groq_service
+from src.backend.core.config import settings
 from src.backend.core.logging import logger
 
 class AIOrchestrator:
@@ -379,24 +381,36 @@ class AIOrchestrator:
                 )
 
             else:
-                # Default Institutional Overview & Suggestions
-                instruments = await instrument_service.search(query="", limit=8)
-                inst_bullets = "\n".join([f"- **{i.display_symbol}** ({i.company_name}) — *{i.exchange_name} ({i.currency})*" for i in instruments])
+                groq_answered = False
+                if groq_service.is_available:
+                    groq_ans = await groq_service.generate_financial_analysis(
+                        user_query=user_text,
+                        conversation_history=[{"role": m.role, "content": m.content} for m in ctx.history]
+                    )
+                    if groq_ans:
+                        response_text = groq_ans
+                        citations.append(f"Groq Cloud AI Analysis ({getattr(settings, 'GROQ_MODEL', 'qwen/qwen3.8-27b')})")
+                        groq_answered = True
 
-                response_text = (
-                    "Hello! I am your institutional AI Stock Market Assistant. "
-                    "I provide zero-hallucination quantitative research, empirical market quotes, and 3-statement fundamental valuation.\n\n"
-                    "#### Supported Financial Research Commands:\n"
-                    "1. **Stock Comparison:** *'Compare NVIDIA and AMD, which looks more attractive?'*\n"
-                    "2. **Portfolio Rebalancing Simulation:** *'If I sell my Tesla shares and invest 60% in NVIDIA and 40% in AMD, what will my portfolio look like?'*\n"
-                    "3. **Real-time Quotes:** *'What is the price of NVDA?'* or *'Check HSBC (HSBA.L)'*\n"
-                    "4. **Technical Analysis:** *'Calculate 14-day RSI and 50-day SMA for TSLA'*\n"
-                    "5. **Fundamental Valuation:** *'Show P/E, profit margins and ROE for Amazon'*\n"
-                    "6. **Financial News & Sentiment:** *'Latest news and sentiment on Tesla'*\n"
-                    "7. **Global Equities Discovery:**\n"
-                    f"{inst_bullets}\n\n"
-                    "Which company or scenario would you like to analyze?"
-                )
+                if not groq_answered:
+                    # Default Institutional Overview & Suggestions
+                    instruments = await instrument_service.search(query="", limit=8)
+                    inst_bullets = "\n".join([f"- **{i.display_symbol}** ({i.company_name}) — *{i.exchange_name} ({i.currency})*" for i in instruments])
+
+                    response_text = (
+                        "Hello! I am your institutional AI Stock Market Assistant. "
+                        "I provide zero-hallucination quantitative research, empirical market quotes, and 3-statement fundamental valuation.\n\n"
+                        "#### Supported Financial Research Commands:\n"
+                        "1. **Stock Comparison:** *'Compare NVIDIA and AMD, which looks more attractive?'*\n"
+                        "2. **Portfolio Rebalancing Simulation:** *'If I sell my Tesla shares and invest 60% in NVIDIA and 40% in AMD, what will my portfolio look like?'*\n"
+                        "3. **Real-time Quotes:** *'What is the price of NVDA?'* or *'Check HSBC (HSBA.L)'*\n"
+                        "4. **Technical Analysis:** *'Calculate 14-day RSI and 50-day SMA for TSLA'*\n"
+                        "5. **Fundamental Valuation:** *'Show P/E, profit margins and ROE for Amazon'*\n"
+                        "6. **Financial News & Sentiment:** *'Latest news and sentiment on Tesla'*\n"
+                        "7. **Global Equities Discovery:**\n"
+                        f"{inst_bullets}\n\n"
+                        "Which company or scenario would you like to analyze?"
+                    )
 
         except PolicyViolationError as pve:
             logger.warning("Policy violation during chat execution: %s", pve)
@@ -419,6 +433,9 @@ class AIOrchestrator:
         return ChatResponse(
             session_id=session_id,
             message=assistant_msg,
+            answer=response_text,
+            ui_widgets=widgets,
+            sources=citations,
             execution_trace={
                 "intent": intent.value if hasattr(intent, "value") else str(intent),
                 "symbols": symbols,

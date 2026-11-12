@@ -23,6 +23,9 @@ class ChatResponse(BaseModel):
     session_id: str
     message: ChatMessage
     execution_trace: Optional[Dict[str, Any]] = None
+    answer: Optional[str] = None
+    ui_widgets: Optional[List[UIWidget]] = None
+    sources: Optional[List[str]] = None
 
 class ConversationContext(BaseModel):
     session_id: str
